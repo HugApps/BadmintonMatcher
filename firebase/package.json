@@ -1,0 +1,11 @@
+{
+  "name": "badminton_matcher",
+  "version": "1.0.0",
+  "description": "firebase cloud function",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "",
+  "license": "ISC"
+}
