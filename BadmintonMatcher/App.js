@@ -5,8 +5,9 @@
  * @format
  * @flow strict-local
  */
+import 'react-native-gesture-handler';
+import React, { useState, useEffect } from 'react';
 
-import React from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -23,54 +24,84 @@ import {
   DebugInstructions,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { LoginScreen, RegisterForm } from './Screens/AuthScreens';
 
-const App: () => React$Node = () => {
-  return (
-    <>
-      <StatusBar barStyle="dark-content" />
-      <SafeAreaView>
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={styles.scrollView}>
-          <Header />
-          {global.HermesInternal == null ? null : (
-            <View style={styles.engine}>
-              <Text style={styles.footer}>Engine: Hermes</Text>
-            </View>
-          )}
-          <View style={styles.body}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Step One</Text>
-              <Text style={styles.sectionDescription}>
-                Edit <Text style={styles.highlight}>App.js</Text> to change this
-                screen and then come back to see your edits.
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>See Your Changes</Text>
-              <Text style={styles.sectionDescription}>
-                <ReloadInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Debug</Text>
-              <Text style={styles.sectionDescription}>
-                <DebugInstructions />
-              </Text>
-            </View>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Learn More</Text>
-              <Text style={styles.sectionDescription}>
-                Read the docs to discover what to do next:
-              </Text>
-            </View>
-            <LearnMoreLinks />
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    </>
-  );
-};
+// const authSubscribe = auth().onAuthStateChanged(onAuthStateChanged);
+//import auth from '@react-native-firebase/auth';
+
+
+
+
+function setAuthToken(token){
+
+
+
+
+}
+
+export default function App() {
+
+  const AuthStack = createStackNavigator();
+  //when firebase or back end validates credentials 
+  const authState = [loggedIn, setLoggedIn] = useState(false)
+  //token you get from store device
+  const userToken = [user, setUser] = useState(false);
+  //loading assets or authenticating state
+  const loadingState = [loading, setLoading] = useState(false);
+
+
+
+
+  console.log(loggedIn)
+  console.log(user);
+
+  //get authentication first, either from device or firebase
+  if (loading) {
+    return (
+      <View style={{flex:1,justifyContent:'center',alignItems:'center'}}>
+        <Text>Loading</Text>
+      </View>
+    )
+  }
+
+  if (!user && !loggedIn) {
+
+    return (
+      <NavigationContainer>
+        <AuthStack.Navigator>
+          <AuthStack.Screen 
+            name="LoginScreen"  
+            component={LoginScreen}  
+            initialParams ={
+              {
+                onLoginSuccess:(token)=>{
+                 setUser(token);
+                 setLoggedIn(true);
+                }
+              } }
+              />
+          <AuthStack.Screen name="RegisterScreen" component={RegisterForm} />
+        </AuthStack.Navigator>
+      </NavigationContainer>
+    );
+
+
+  } else {
+
+    return (
+      <View>
+        <Text>Future drawer navigation dashboard page</Text>
+      </View>
+
+    )
+  }
+
+
+
+
+}
 
 const styles = StyleSheet.create({
   scrollView: {
@@ -111,4 +142,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default App;
+
