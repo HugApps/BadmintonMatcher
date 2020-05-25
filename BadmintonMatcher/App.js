@@ -27,6 +27,8 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LoginScreen, RegisterForm } from './Screens/AuthScreens';
+import auth from '@react-native-firebase/auth';
+import { set } from 'react-native-reanimated';
 
 // const authSubscribe = auth().onAuthStateChanged(onAuthStateChanged);
 //import auth from '@react-native-firebase/auth';
@@ -35,9 +37,31 @@ import { LoginScreen, RegisterForm } from './Screens/AuthScreens';
 
 
 function setAuthToken(token){
+  setUser(token);
+  setLoggedIn(token)
+  console.log('TOken',token);
+  if(loading){setLoading(false)}
+}
 
 
+function onSignUp(email,password){
+  auth().createUserWithEmailAndPassword(email,password).then((result)=>{
+     console.log(result);
+     console.log('Sign up successful');
+     return result;
+  })
+  .catch((error)=>{
+    console.log(email,password)
+    if (error.code === 'auth/email-already-in-use') {
+      console.log('That email address is already in use!');
+    }
 
+    if (error.code === 'auth/invalid-email') {
+      console.log('That email address is invalid!');
+    }
+
+    console.error(error);
+  });
 
 }
 
@@ -49,8 +73,12 @@ export default function App() {
   //token you get from store device
   const userToken = [user, setUser] = useState(false);
   //loading assets or authenticating state
-  const loadingState = [loading, setLoading] = useState(false);
+  const loadingState = [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(setAuthToken);
+    return subscriber; // unsubscribe on unmount
+  }, []);
 
 
 // @refresh reset
@@ -82,7 +110,15 @@ export default function App() {
                 }
               } }
               />
-          <AuthStack.Screen name="RegisterScreen" component={RegisterForm} />
+          <AuthStack.Screen 
+            name="RegisterScreen" 
+            initialParams ={
+              {
+                onRegister:(email,password)=>{
+                 onSignUp(email,password)
+                }
+              } }
+            component={RegisterForm} />
         </AuthStack.Navigator>
       </NavigationContainer>
     );

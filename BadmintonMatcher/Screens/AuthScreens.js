@@ -42,7 +42,7 @@ function LoginScreen(props) {
             ></Button>
             <Button
                 title = 'Register'
-                onPress ={()=>props.route.params.onLoginSuccess('test')}>
+                onPress ={()=>props.navigation.navigate('RegisterScreen')}>
             </Button>
         </View>
     )
@@ -57,6 +57,10 @@ function LoginScreen(props) {
 function RegisterForm(props){
         const [email , setEmail] = useState('');
         const [password,setPassword] = useState('');
+
+        const params = props.route.params
+
+        console.log(props.route);
 
         return (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
@@ -77,11 +81,11 @@ function RegisterForm(props){
                 />
                 <Button
                     title ='Register!'
-                    onPress={()=>{props.navigator.navigate('Dashboard')}}
+                    onPress={()=>{props.route.params.onRegister(email,password)}}
                 ></Button>
                 <Button
                     title = 'Back'
-                    onPress ={()=>this.setState({loggedIn:false,newUser:false})}>
+                    onPress ={()=>props.navigation.navigate('LoginScreen')}>
                 </Button>
             </View>
         )
