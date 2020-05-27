@@ -22,11 +22,11 @@ function LoginScreen(props) {
 
     const params = props.route.params
 
-    console.log(props.route);
+
 
     return (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text>LoginPage</Text>
+        <View style={{ flex: 1, flexDirection:'column', alignItems: 'center', justifyContent: 'space-evenly' }}>
+            <Text>Login</Text>
             <TextInput 
                 placeholder={'Email'}
                 onChangeText= {(text)=>{setEmail(text)}}
@@ -38,7 +38,7 @@ function LoginScreen(props) {
             />
             <Button
                 title ='Login'
-                onPress={()=>{props.route.params.onLoginSuccess('test')}}
+                onPress={()=>{props.route.params.onLogin(email,password)}}
             ></Button>
             <Button
                 title = 'Register'
@@ -59,8 +59,6 @@ function RegisterForm(props){
         const [password,setPassword] = useState('');
 
         const params = props.route.params
-
-        console.log(props.route);
 
         return (
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
