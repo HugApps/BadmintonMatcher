@@ -111,7 +111,9 @@ export default function App() {
         <AuthStack.Navigator>
           <AuthStack.Screen
             name="LoginScreen"
+            headerShown={false}
             component={LoginScreen}
+            options={{ headerShown:false,title: null }}
             initialParams={
               {
                 onLogin: (email,password) => {
@@ -134,8 +136,7 @@ export default function App() {
 
 
   } else {
-    console.log(user);
-    console.log(loggedIn)
+  
     return (
 
       <View style={{ flex: 1,alignContent:"center",justifyContent:"center" }}>
