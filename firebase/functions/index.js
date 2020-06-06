@@ -38,6 +38,12 @@ exports.createNewUser = functions.auth.user().onCreate((user)=>{
    );
 });
 
+
+exports.loadUserProfile = functions.https.onCall((data,context)=>{
+    console.log('loadUserProfileCalled',context,data);
+    return {data:data,context:context}
+});
+
 // load profile 
 
 app.get('/my_profile',(req,res) => {
@@ -47,6 +53,9 @@ app.get('/my_profile',(req,res) => {
     //using admin-sdk retrieve user profile based on uid, and email
     //return json of profile or error out 
 });
+
+
+
 
 
 

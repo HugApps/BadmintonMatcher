@@ -15,7 +15,8 @@ import {
   View,
   Text,
   StatusBar,
-  Button
+  Button,
+  Alert 
 } from 'react-native';
 
 import {
@@ -29,6 +30,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { LoginScreen, RegisterForm } from './Screens/AuthScreens';
 import auth from '@react-native-firebase/auth';
+import DashBoard from './Screens/Dashboard';
+import AuthScreens from './Screens/AuthScreens';
 
 
 // const authSubscribe = auth().onAuthStateChanged(onAuthStateChanged);
@@ -36,53 +39,17 @@ import auth from '@react-native-firebase/auth';
 console.disableYellowBox = true; 
 export default function App() {
 
-  const AuthStack = createStackNavigator();
+  const MainStack = createStackNavigator();
   //when firebase or back end validates credentials 
   const [loggedIn, setLoggedIn] = useState(false)
   //token you get from store device
   const [user, setUser] = useState(false);
   //loading assets or authenticating state
   const [loading, setLoading] = useState(true);
-  const onSignUp = (email, password) => {
-    if (email == null || password == null) {
-      console.log('no email and password is provided');
-    }
-    if (email.length == 0 || password.length == 0) {
-      console.log('Please provide a email and password to signup with');
-    }
-    auth().createUserWithEmailAndPassword(email, password).then((result) => {
-      console.log('Sign up successful');
-      return result;
-    })
-      .catch((error) => {
-        console.log(email, password)
-        if (error.code === 'auth/email-already-in-use') {
-          console.log('That email address is already in use!');
-        }
-
-        if (error.code === 'auth/invalid-email') {
-          console.log('That email address is invalid!');
-        }
-
-        console.error(error);
-      });
-
-  }
+  
 
 
-  const onSignIn = (email,password) =>{
-    auth().signInWithEmailAndPassword(email,password).then((result)=>{
-      if(result){
-        console.log('log in successful',result);
-        return result;
-      }
-    }).catch((error)=>{
-      console.log(error);
-      return error;
-    });
-  }
-
-
+// @refresh reset
   const setAuthToken = (token) => {
     console.log('state changed right?')
     if (token != null) {
@@ -104,54 +71,15 @@ export default function App() {
   //get authentication first, either from device or firebase
 
 
-  if (!user) {
+  //if (!user) {
 
     return (
       <NavigationContainer>
-        <AuthStack.Navigator>
-          <AuthStack.Screen
-            name="LoginScreen"
-            headerShown={false}
-            component={LoginScreen}
-            options={{ headerShown:false,title: null }}
-            initialParams={
-              {
-                onLogin: (email,password) => {
-                  onSignIn(email,password)
-                }
-              }}
-          />
-          <AuthStack.Screen
-            name="RegisterScreen"
-            initialParams={
-              {
-                onRegister: (email, password) => {
-                  onSignUp(email, password)
-                }
-              }}
-            component={RegisterForm} />
-        </AuthStack.Navigator>
+        <MainStack.Navigator>
+          {!user ? (<MainStack.Screen name ="AuthStack"  initialParams={{auth:auth} } component = {AuthScreens}/>) : ( <MainStack.Screen name ="DashBoard"  initialParams={{auth:auth} } component = {DashBoard}/>)}         
+        </MainStack.Navigator>
       </NavigationContainer>
     );
-
-
-  } else {
-  
-    return (
-
-      <View style={{ flex: 1,alignContent:"center",justifyContent:"center" }}>
-        <Text>Future drawer navigation dashboard page</Text>
-        <Text>{user.email}</Text>
-        <Button 
-            onPress={()=>{auth().signOut().then(()=>{setUser(false);})}}
-            title={"Log out"}/>
-      </View>
-
-    )
-  }
-
-
-
 
 }
 
