@@ -14,7 +14,7 @@ import {
 
 } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
-import auth from '@react-native-firebase/auth';
+
 //import auth from '@react-native-firebase/auth';
 
 /// @refresh reset 
@@ -39,7 +39,7 @@ function LoginScreen(props) {
     }
 
     const handleSubmit = (props) => {
-        if (checkField(email) && checkField(password)) { props.route.params.onLogin(email, password) }
+        if (checkField(email) && checkField(password)) { props.route.params.login(email, password) }
         else {
             Alert.alert('Login error', 'Check and see if your fields are inputed correctly')
         }
@@ -112,15 +112,17 @@ function RegisterForm(props) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const params = props.route.params
     const checkField = (fieldText) => {
         if (fieldText == null) { return false }
         if (fieldText.length <= 0) { return false }
         return true;
     }
 
-    const handleSubmit = (props) => {
-        if (checkField(email) && checkField(password)) { if (props.route.params.onRegister(email, password)) { props.navigation.navigate('DashBoard',{auth:props.route.params.auth}) } }
+
+    console.log('registerSCreen',props.route.params);
+    const handleSubmit = ( ) => {
+        if (checkField(email) && checkField(password)) { 
+            props.route.params.register(email, password);}
         else {
             Alert.alert('Registration error', 'Check and see if your fields are inputed correctly')
         }
@@ -167,7 +169,7 @@ function RegisterForm(props) {
                 <View style={{ marginTop: 40, flexDirection: 'row', justifyContent: 'space-around' }}>
                     <Button
                         title='Register Now!'
-                        onPress={() => { handleSubmit(props) }}
+                        onPress={() => { handleSubmit() }}
                     ></Button>
                     <Button
                         title='Back'
@@ -201,34 +203,8 @@ export default function AuthScreens(props) {
     const [user, setUser] = useState(false);
     //loading assets or authenticating state
     const [loading, setLoading] = useState(true);
-    const onSignUp = (email, password) => {
-
-        props.route.params.auth().createUserWithEmailAndPassword(email, password).then((result) => {
-            console.log('Sign up successful');
-            return result;
-        })
-            .catch((error) => {
-                Alert.alert('Sign up error', error.message);
-            });
-
-    }
-
-
-    const onSignIn = (email, password) => {
-        props.route.params.auth().signInWithEmailAndPassword(email, password).then((result) => {
-            if (result) {
-                console.log('log in successful', result);
-                props.navigation.navigate('DashBoard')
-                return result;
-            }
-        }).catch((error) => {
-
-            console.log(error);
-            Alert.alert('Login error', error.message);
-            return error;
-        });
-    }
-
+   
+    console.log('authSTACKPROPS',props);
 
     return (
         <AuthStack.Navigator>
@@ -236,22 +212,14 @@ export default function AuthScreens(props) {
                 name="LoginScreen"
                 headerShown={false}
                 component={LoginScreen}
+                screenProps={{test:'test'}}
                 options={{ headerShown: false, title: null }}
-                initialParams={
-                    {
-                        onLogin: (email, password) => {
-                            onSignIn(email, password)
-                        }
-                    }}
+                initialParams={{login:props.route.params.login}}
             />
             <AuthStack.Screen
                 name="RegisterScreen"
-                initialParams={
-                    {
-                        onRegister: (email, password) => {
-                            onSignUp(email, password)
-                        }
-                    }}
+                screenProps={{test:'test'}}
+                initialParams={{register:(email,password)=>props.route.params.register(email,password)}}
                 component={RegisterForm} />
         </AuthStack.Navigator>
     )

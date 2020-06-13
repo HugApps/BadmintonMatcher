@@ -46,12 +46,53 @@ export default function App() {
   const [user, setUser] = useState(false);
   //loading assets or authenticating state
   const [loading, setLoading] = useState(true);
+
+
+
+  const logout =() =>{
+    auth().signOut().then((result)=>{console.log('signed out'); setUser(null); setLoading(false);
+    setLoggedIn(false);}).catch((error)=>{console.log(error)})
+  //props.route.params
+  }
+  const onSignUp = (email, password) => {
+
+    auth().createUserWithEmailAndPassword(email, password).then((result) => {
+       if(result){
+        console.log('Sign up successful');
+        setUser(result);
+        setLoading(false);
+        setLoggedIn(true);
+      
+       }
+     
+    }).catch((error) => {
+            Alert.alert('Sign up error', error.message);
+    });
+
+}
+
+
+const onSignIn = (email, password) => {
+  auth().signInWithEmailAndPassword(email, password).then((result) => {
+        if (result) {
+            setUser(result);
+            setLoading(false);
+            setLoggedIn(true);
+            
+        }
+    }).catch((error) => {
+
+        console.log(error);
+        Alert.alert('Login error', error.message);
+        return error;
+    });
+}
   
 
 
 // @refresh reset
   const setAuthToken = (token) => {
-    console.log('state changed right?')
+    console.log('state changed right?',token)
     if (token != null) {
       setUser(token);
       setLoading(false);
@@ -69,14 +110,17 @@ export default function App() {
 
   //@refresh reset
   //get authentication first, either from device or firebase
-
+  
 
   //if (!user) {
 
     return (
       <NavigationContainer>
         <MainStack.Navigator>
-          {!user ? (<MainStack.Screen name ="AuthStack"  initialParams={{auth:auth} } component = {AuthScreens}/>) : ( <MainStack.Screen name ="DashBoard"  initialParams={{auth:auth} } component = {DashBoard}/>)}         
+          {!user ? (
+            <MainStack.Screen 
+              name ="AuthStack"  
+              initialParams={{login:onSignIn,register:onSignUp} } component = {AuthScreens}/>) : ( <MainStack.Screen name ="DashBoard"  initialParams={{logout:logout} } component = {DashBoard}/>)}         
         </MainStack.Navigator>
       </NavigationContainer>
     );

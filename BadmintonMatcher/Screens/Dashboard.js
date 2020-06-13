@@ -17,12 +17,11 @@ import {
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
-import auth from '@react-native-firebase/auth';
-
+//import console = require('console');
 
 
 function CustomDrawerContainer(props) {
-  console.log('drawer props',props);
+  console.log('CUSTOMDRAWERCONTAINER',Object.keys(props));
   return (
     <DrawerContentScrollView {...props}>
       <DrawerItemList {...props} />
@@ -30,7 +29,7 @@ function CustomDrawerContainer(props) {
         label="Help"
         onPress={() => Linking.openURL('https://mywebsite.com/help')}
       />
-      <DrawerItem label="Logout" onPress={() => {auth.signOut()}} />
+      <DrawerItem label="Logout" onPress={() => {props.logout()}} />
     </DrawerContentScrollView>
   )
 
@@ -50,16 +49,16 @@ function DemoScreen(props) {
   )
 }
 
-export default function DashBoard({ route, navigation }) {
+export default function DashBoard(props) {
 
-  const { auth } = route.params;
+  console.log('DashBoard',props.route.params)
 
   return (
-      <Drawer.Navigator initialRouteName="Home" drawerContent={props => CustomDrawerContainer({ ...props })}>
-        <Drawer.Screen name="Main" component={DemoScreen} initialParams={{ auth:auth, title:'main page' }} />
-        <Drawer.Screen name="Profile" component={DemoScreen} initialParams={{auth:auth, title: 'profile page' }} />
-        <Drawer.Screen name="Matches" component={DemoScreen} initialParams={{ auth:auth, title:'Match history page' }} />
-        <Drawer.Screen name="Search" component={DemoScreen} nitialParams={{ auth:auth,title: 'Player search' }} />
+      <Drawer.Navigator initialRouteName="Home" drawerContent={stuff => <CustomDrawerContainer logout={()=>{props.route.params.logout()}} {...stuff}/>}>
+        <Drawer.Screen name="Main" component={DemoScreen} initialParams={{  title:'main page' }} />
+        <Drawer.Screen name="Profile" component={DemoScreen} initialParams={{title: 'profile page' }} />
+        <Drawer.Screen name="Matches" component={DemoScreen} initialParams={{  title:'Match history page' }} />
+        <Drawer.Screen name="Search" component={DemoScreen} nitialParams={{   title: 'Player search' }} />
       </Drawer.Navigator>
   );
 }
