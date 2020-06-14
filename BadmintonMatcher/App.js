@@ -54,15 +54,19 @@ export default function App() {
     setLoggedIn(false);}).catch((error)=>{console.log(error)})
   //props.route.params
   }
-  const onSignUp = (email, password) => {
+  const onSignUp = (email, password,displayName) => {
 
     auth().createUserWithEmailAndPassword(email, password).then((result) => {
        if(result){
         console.log('Sign up successful');
-        setUser(result);
-        setLoading(false);
-        setLoggedIn(true);
-      
+        auth().currentUser.updateProfile({displayName:displayName}).then((result)=>{
+          setUser(result);
+          setLoading(false);
+          setLoggedIn(true);
+
+        }).catch((error)=>{
+          Alert.alert('Sign up error', error.message);
+        });
        }
      
     }).catch((error) => {
@@ -76,6 +80,7 @@ const onSignIn = (email, password) => {
   auth().signInWithEmailAndPassword(email, password).then((result) => {
         if (result) {
             setUser(result);
+            console.log('USER PROPERTIES',result);
             setLoading(false);
             setLoggedIn(true);
             

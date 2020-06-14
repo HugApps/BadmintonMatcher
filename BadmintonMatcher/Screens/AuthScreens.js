@@ -111,6 +111,7 @@ function LoginScreen(props) {
 function RegisterForm(props) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [displayName,setDisplayName] =useState('');
 
     const checkField = (fieldText) => {
         if (fieldText == null) { return false }
@@ -119,10 +120,11 @@ function RegisterForm(props) {
     }
 
 
-    console.log('registerSCreen',props.route.params);
-    const handleSubmit = ( ) => {
-        if (checkField(email) && checkField(password)) { 
-            props.route.params.register(email, password);}
+    console.log('registerSCreen', props.route.params);
+    const handleSubmit = () => {
+        if (checkField(email) && checkField(password)) {
+            props.route.params.register(email, password,displayName);
+        }
         else {
             Alert.alert('Registration error', 'Check and see if your fields are inputed correctly')
         }
@@ -137,6 +139,15 @@ function RegisterForm(props) {
 
                     <Text style={{ fontSize: 30, padding: 10, marginBottom: 30 }}>Register</Text>
                     <Text style={{ padding: 10, fontWeight: 'bold' }}>Badminton Matcher: Meet skilled opponents,improve your Game, and build your network!</Text>
+                </View>
+
+                <View style={{ margin: 10 }}>
+                    <Text style={{ paddingBottom: 10 }}>Display Name : What other users will identify you as</Text>
+                    <TextInput
+                        style={{ padding: 10, borderBottomWidth: 1 }}
+                        placeholder={'Email'}
+                        onChangeText={(text) => { setDisplayName(text) }}
+                    />
                 </View>
 
                 <View style={{ margin: 10 }}>
@@ -203,8 +214,8 @@ export default function AuthScreens(props) {
     const [user, setUser] = useState(false);
     //loading assets or authenticating state
     const [loading, setLoading] = useState(true);
-   
-    console.log('authSTACKPROPS',props);
+
+    console.log('authSTACKPROPS', props);
 
     return (
         <AuthStack.Navigator>
@@ -212,14 +223,14 @@ export default function AuthScreens(props) {
                 name="LoginScreen"
                 headerShown={false}
                 component={LoginScreen}
-                screenProps={{test:'test'}}
+                screenProps={{ test: 'test' }}
                 options={{ headerShown: false, title: null }}
-                initialParams={{login:props.route.params.login}}
+                initialParams={{ login: props.route.params.login }}
             />
             <AuthStack.Screen
                 name="RegisterScreen"
-                screenProps={{test:'test'}}
-                initialParams={{register:(email,password)=>props.route.params.register(email,password)}}
+                screenProps={{ test: 'test' }}
+                initialParams={{ register: (email, password,displayName) => props.route.params.register(email, password,displayName) }}
                 component={RegisterForm} />
         </AuthStack.Navigator>
     )

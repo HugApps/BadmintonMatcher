@@ -17,11 +17,13 @@ import {
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
+import auth from '@react-native-firebase/auth';
+import ProfileScreen from './ProfileScreen';
 //import console = require('console');
 
 
 function CustomDrawerContainer(props) {
-  console.log('CUSTOMDRAWERCONTAINER',Object.keys(props));
+
   return (
     <DrawerContentScrollView {...props}>
       <DrawerItemList {...props} />
@@ -41,10 +43,13 @@ function CustomDrawerContainer(props) {
 const Drawer = createDrawerNavigator();
 
 function DemoScreen(props) {
+  const user =   auth().currentUser
+  console.log('logged in user',user);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>{props.route.params.title}</Text>
+      <Text>{user.displayName}</Text>
+      <Text>{user.email}</Text>
     </View>
   )
 }
@@ -56,7 +61,7 @@ export default function DashBoard(props) {
   return (
       <Drawer.Navigator initialRouteName="Home" drawerContent={stuff => <CustomDrawerContainer logout={()=>{props.route.params.logout()}} {...stuff}/>}>
         <Drawer.Screen name="Main" component={DemoScreen} initialParams={{  title:'main page' }} />
-        <Drawer.Screen name="Profile" component={DemoScreen} initialParams={{title: 'profile page' }} />
+        <Drawer.Screen name="Profile" component={ProfileScreen} initialParams={{title: 'profile page' }} />
         <Drawer.Screen name="Matches" component={DemoScreen} initialParams={{  title:'Match history page' }} />
         <Drawer.Screen name="Search" component={DemoScreen} nitialParams={{   title: 'Player search' }} />
       </Drawer.Navigator>
