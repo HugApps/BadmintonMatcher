@@ -41,7 +41,7 @@ exports.createNewUser = functions.auth.user().onCreate((user)=>{
 
 exports.loadUserProfile = functions.https.onCall((data,context)=>{
     console.log('loadUserProfileCalled',context,data);
-    return {data:data,context:context}
+    return {data:"complete",context:context}
 });
 
 // load profile 

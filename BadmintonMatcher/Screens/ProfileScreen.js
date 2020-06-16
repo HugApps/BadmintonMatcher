@@ -21,6 +21,7 @@ import {
     DrawerItem,
 } from '@react-navigation/drawer';
 import auth from '@react-native-firebase/auth';
+import functions from '@react-native-firebase/functions';
 
 /* takes in 
     callback to update state
@@ -216,6 +217,22 @@ export default function ProfileScreen(props) {
     const [user, setUser] = useState(auth().currentUser);
     const [displayName, setDisplayName] = useState(user.displayName);
     const [preview, setPreview] = useState(true);
+
+    useEffect(() => {
+        let callable = functions().httpsCallable('loadUserProfile');
+   
+          callable({test:'test'}).then(response => {
+            console.log(response);
+          })
+          .catch((error)=>{
+              console.log(error);
+              var code = error.code;
+              var message = error.message;
+              var details = error.details;
+              console.log(code,message,details)
+            
+            })
+      }, []);
   
     const testData = {
         gender:1,
@@ -224,7 +241,7 @@ export default function ProfileScreen(props) {
         yearsExp:10,
         phoneNum:'604-338-7732',
         racket:'N/A'}
-    const [profileData,setProfileData] =useState({testData});
+    const [profileData,setProfileData] =useState(testData);
 
 
 
