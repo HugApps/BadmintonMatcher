@@ -9,44 +9,85 @@ const axios = require('axios');
 admin.initializeApp(functions.config().firebase);
 const app = express();
 
-app.use(cors({origin:true}));
+app.use(cors({ origin: true }));
 
 
 //client routes
 //User express to handle custom routes
-app.get('/',(req,res)=> res.send('helloworld'));
-app.post('/sign_up',(req,res)=> res.send('helloworld'));
-app.post('/',(req,res)=> res.send('helloworld'));
+app.get('/', (req, res) => res.send('helloworld'));
+app.post('/sign_up', (req, res) => res.send('helloworld'));
+app.post('/', (req, res) => res.send('helloworld'));
 
 
 //Users
 //Create : sign_up
-exports.createNewUser = functions.auth.user().onCreate((user)=>{
-     
-    const dbUrl = 'https://badmintonmatcher-4f217.firebaseio.com/clients.json'
+exports.createNewUser = functions.auth.user().onCreate((user) => {
+
+    const dbUrl = 'https://badmintonmatcher-4f217.firebaseio.com/clients/' + user.uid + '.json';
+    const profileUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+user.uid+".json";
 
     console.log(user);
-    axios.post(
+    var createUser = axios.put(
         dbUrl,
-        {   
+        {
             user_id: user.uid,
-            email:user.email,
-            name:user.displayName,
-            score:1000,
-            profilePicUrL:user.photoURL
-           }
-   );
+            email: user.email,
+            name: user.displayName,
+            score: 1000,
+            profilePicUrL: user.photoURL
+        }
+    );
+    
+    var userProfile = {
+        display_name:"",
+        email:user.email,
+        score:user.score,
+        summary:"",
+        phone:"",
+        years_of_exp:"",
+        sex:"",
+        game_mode:""
+    }
+
+
+    var createProfile = axios.put(profileUrl,userProfile);
+    return Promise.all([createUser,createProfile]);
 });
 
 
-exports.loadUserProfile = functions.https.onCall((data,context)=>{
-    console.log('loadUserProfileCalled',context,data);
-    return {data:"complete",context:context}
+exports.loadUserProfile = functions.https.onCall((data, context) => {
+    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+context.auth.uid+".json";
+
+
+    console.log('loadUserProfileCalled', context, data);
+    const text = data.text;
+    // Authentication / user information is automatically added to the request.
+    axios.get()
+    const uid = context.auth.uid;
+    const name = context.auth.token.name || null;
+    const picture = context.auth.token.picture || null;
+    const email = context.auth.token.email || null;
+    return { data: "complete", context: {uid:uid,name:name,email:email,token:context.auth.token} }
+});
+
+exports.updateUserProfile = functions.https.onCall((data, context) => {
+    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+context.auth.uid+".json";
+
+
+    console.log('loadUserProfileCalled', context, data);
+    const text = data.text;
+    // Authentication / user information is automatically added to the request.
+    axios.get()
+    const uid = context.auth.uid;
+    const name = context.auth.token.name || null;
+    const picture = context.auth.token.picture || null;
+    const email = context.auth.token.email || null;
+    return { data: "complete", context: {uid:uid,name:name,email:email,token:context.auth.token} }
 });
 
 // load profile 
 
-app.get('/my_profile',(req,res) => {
+app.get('/my_profile', (req, res) => {
 
     //Check if token is present 
     //check token is verified and valid using admin sdk 
@@ -105,4 +146,4 @@ app.get('/my_profile',(req,res) => {
 //future admin routes
 
 //Exposes custom routes  cloud function to firebase
- exports.client_api = functions.https.onRequest(app);
+exports.client_api = functions.https.onRequest(app);
