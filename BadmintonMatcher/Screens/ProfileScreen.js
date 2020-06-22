@@ -111,23 +111,23 @@ function SelectButtons(props) {
 }
 
 function Info(props) {
-    const profileData  = props.profileData
+    const profileData = props.profileData
     const [edit, setEdit] = useState('preview')
     const [gender, setGender] = useState(profileData.gender)
-    const [description,setDescription] =useState(profileData.description)
-    const [matchType,setMatchType] =useState(profileData.matchType)
-    const [yearsExp,setYearsExP] = useState(profileData.yearsExp)
-    const [phoneNum,setPhoneNum] =useState(profileData.phoneNum)
-    const [racket,setRacket] = useState(profileData.racket)
+    const [description, setDescription] = useState(profileData.description)
+    const [matchType, setMatchType] = useState(profileData.matchType)
+    const [yearsExp, setYearsExP] = useState(profileData.yearsExp)
+    const [phoneNum, setPhoneNum] = useState(profileData.phoneNum)
+    const [racket, setRacket] = useState(profileData.racket)
 
-    const  buildSubmitData =()=>{
+    const buildSubmitData = () => {
         return {
-            gender:gender,
-            description:description,
-            matchType:matchType,
-            yearsExp:yearsExp,
-            phoneNum:phoneNum,
-            racket:racket
+            gender: gender,
+            description: description,
+            matchType: matchType,
+            yearsExp: yearsExp,
+            phoneNum: phoneNum,
+            racket: racket
         };
     }
 
@@ -136,40 +136,40 @@ function Info(props) {
 
         <View style={{ flex: 4, margin: 10, padding: 10, justifyConent: 'flex-start', backgroundColor: '#5A8DD8', width: '100%' }} >
             <View style={{ flex: 1 }}>
-                <TextBox 
+                <TextBox
                     value={description}
-                    mode={edit} 
-                    onEdit={(text)=>{setDescription(text)}}
+                    mode={edit}
+                    onEdit={(text) => { setDescription(text) }}
                     label='About You:' />
-                <InputRow 
+                <InputRow
                     value={phoneNum}
-                    label='Phone:' 
-                    onEdit={(text)=>{setPhoneNum(text)}}
+                    label='Phone:'
+                    onEdit={(text) => { setPhoneNum(text) }}
                     mode={edit} />
-                <InputRow 
+                <InputRow
                     value={yearsExp}
-                    label='Years of Experience:' 
-                    onEdit={(text)=>{setYearsExP(text)}}
+                    label='Years of Experience:'
+                    onEdit={(text) => { setYearsExP(text) }}
                     mode={edit} />
-                <InputRow 
-                    value={racket} 
-                    label='Favorite/Current Badminton Racket:' 
-                    onEdit={(text)=>{setRacket(text)}}
+                <InputRow
+                    value={racket}
+                    label='Favorite/Current Badminton Racket:'
+                    onEdit={(text) => { setRacket(text) }}
                     mode={edit} />
 
                 <Text style={{ color: 'white' }}>Sex:</Text>
-                <SelectButtons 
-                    values={['Male', 'Female', 'N/a']} 
-                    mode={edit} 
-                    selected={gender} 
+                <SelectButtons
+                    values={['Male', 'Female', 'N/a']}
+                    mode={edit}
+                    selected={gender}
                     onSelect={(index) => { setGender(index) }} />
 
 
                 <Text style={{ color: 'white' }}>Prefered game:(Single,Mixed,Doubles)</Text>
-                <SelectButtons 
-                    values={['Single', 'Doubles', 'Mixed']} 
-                    mode={edit} 
-                    selected={matchType} 
+                <SelectButtons
+                    values={['Single', 'Doubles', 'Mixed']}
+                    mode={edit}
+                    selected={matchType}
                     onSelect={(index) => { setMatchType(index) }} />
                 {edit == 'preview' ? (<TouchableOpacity onPress={() => { setEdit('edit') }} style={{ flex: 0.5, height: 50, justifyContent: 'center', backgroundColor: '#304BCF', alignItems: 'center', borderWidth: 0.5, borderRadius: 5, borderColor: '#5A8DD8' }}>
                     <Text>Edit</Text>
@@ -185,11 +185,7 @@ function Info(props) {
                         </TouchableOpacity>
                     </View>
 
-
-
                 }
-
-
 
             </View>
 
@@ -220,28 +216,29 @@ export default function ProfileScreen(props) {
 
     useEffect(() => {
         let callable = functions().httpsCallable('loadUserProfile');
-   
-          callable({test:'test'}).then(response => {
-            console.log(response);
-          })
-          .catch((error)=>{
-              console.log(error);
-              var code = error.code;
-              var message = error.message;
-              var details = error.details;
-              console.log(code,message,details)
-            
+
+        callable().then(response => {
+            console.log('api response', response.data);
+        })
+            .catch((error) => {
+                console.log(error);
+                var code = error.code;
+                var message = error.message;
+                var details = error.details;
+                console.log(code, message, details)
+
             })
-      }, []);
-  
+    }, []);
+
     const testData = {
-        gender:1,
-        description:'test description text',
-        matchType:1,
-        yearsExp:10,
-        phoneNum:'604-338-7732',
-        racket:'N/A'}
-    const [profileData,setProfileData] =useState(testData);
+        gender: 1,
+        description: 'test description text',
+        matchType: 1,
+        yearsExp: 10,
+        phoneNum: '604-338-7732',
+        racket: 'N/A'
+    }
+    const [profileData, setProfileData] = useState(testData);
 
 
 
@@ -251,7 +248,7 @@ export default function ProfileScreen(props) {
             <ScrollView>
                 <DisplayBanner />
                 <ButtonBar />
-                <Info profileData={profileData} onSubmit ={(data)=>{setProfileData(data)}}/>
+                <Info profileData={profileData} onSubmit={(data) => { setProfileData(data) }} />
             </ScrollView>
         </View >
     )

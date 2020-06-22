@@ -57,17 +57,10 @@ exports.createNewUser = functions.auth.user().onCreate((user) => {
 
 exports.loadUserProfile = functions.https.onCall((data, context) => {
     const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+context.auth.uid+".json";
-
-
-    console.log('loadUserProfileCalled', context, data);
-    const text = data.text;
+    return  axios.get(apiUrl).then((result)=>{
+        return result.data;
+    }).catch((error)=>{return error})
     // Authentication / user information is automatically added to the request.
-    axios.get()
-    const uid = context.auth.uid;
-    const name = context.auth.token.name || null;
-    const picture = context.auth.token.picture || null;
-    const email = context.auth.token.email || null;
-    return { data: "complete", context: {uid:uid,name:name,email:email,token:context.auth.token} }
 });
 
 exports.updateUserProfile = functions.https.onCall((data, context) => {
