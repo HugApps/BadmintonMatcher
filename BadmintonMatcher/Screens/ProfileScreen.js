@@ -10,7 +10,7 @@ import {
     StatusBar,
     Image,
     TextInput,
-    TouchableOpacity
+    TouchableOpacity, ActivityIndicator
 } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -23,12 +23,7 @@ import {
 import auth from '@react-native-firebase/auth';
 import functions from '@react-native-firebase/functions';
 
-/* takes in 
-    callback to update state
-    initial value for place holder,
-    and label
 
-*/
 /// @refresh reset 
 function InputRow(props) {
 
@@ -101,37 +96,34 @@ function SelectButtons(props) {
                         <Text style={{ color: 'white', fontSize: 13 }}>{v}</Text>
                     </TouchableOpacity>
                 )
-
-
             })}
-
         </View>
     )
-
 }
 
 function Info(props) {
-    const profileData = props.profileData
+    let profileData = props.profileData;
+ 
     const [edit, setEdit] = useState('preview')
-    const [gender, setGender] = useState(profileData.gender)
-    const [description, setDescription] = useState(profileData.description)
-    const [matchType, setMatchType] = useState(profileData.matchType)
-    const [yearsExp, setYearsExP] = useState(profileData.yearsExp)
-    const [phoneNum, setPhoneNum] = useState(profileData.phoneNum)
-    const [racket, setRacket] = useState(profileData.racket)
+    const [gender, setGender] = useState(props.profileData['gender'])
+    const [description, setDescription] = useState(props.profileData['description'])
+    const [matchType, setMatchType] = useState(props.profileData['matchType'])
+    const [yearsExp, setYearsExP] = useState(props.profileData['yearsExp'])
+    const [phoneNum, setPhoneNum] = useState(props.profileData['phoneNum'])
+    const [racket, setRacket] = useState(props.profileData['racket'])
 
     const buildSubmitData = () => {
+
         return {
             gender: gender,
-            description: description,
-            matchType: matchType,
-            yearsExp: yearsExp,
-            phoneNum: phoneNum,
+            summary: description,
+            gameMode: matchType,
+            years_of_exp: yearsExp,
+            phone: phoneNum,
             racket: racket
         };
     }
 
-    console.log('CURRENT GENDER', gender);
     return (
 
         <View style={{ flex: 4, margin: 10, padding: 10, justifyConent: 'flex-start', backgroundColor: '#5A8DD8', width: '100%' }} >
@@ -163,8 +155,6 @@ function Info(props) {
                     mode={edit}
                     selected={gender}
                     onSelect={(index) => { setGender(index) }} />
-
-
                 <Text style={{ color: 'white' }}>Prefered game:(Single,Mixed,Doubles)</Text>
                 <SelectButtons
                     values={['Single', 'Doubles', 'Mixed']}
@@ -184,13 +174,9 @@ function Info(props) {
                             <Text>Cancel</Text>
                         </TouchableOpacity>
                     </View>
-
                 }
-
             </View>
-
         </View>
-
     )
 }
 
@@ -213,42 +199,61 @@ export default function ProfileScreen(props) {
     const [user, setUser] = useState(auth().currentUser);
     const [displayName, setDisplayName] = useState(user.displayName);
     const [preview, setPreview] = useState(true);
+    const [profileData, setProfileData] = useState(null
+
+    );
+
+    const saveData = (data) => {
+        console.log('Updating profile',data);
+        let callable = functions().httpsCallable('updateUserProfile');
+
+        callable(data).then(res => {
+            console.log('update result', res.data);
+        });
+
+
+
+    }
 
     useEffect(() => {
         let callable = functions().httpsCallable('loadUserProfile');
 
         callable().then(response => {
-            console.log('api response', response.data);
+            console.log('response from server', response.data);
+            let userProfile = {
+                test: 'test',
+                gender: response.data['gender'] ? response.data['gender'] : 1,
+                description: response.data['summary'] ? response.data['summary'] : ' ',
+                matchType: response.data['game_mode'] ? response.data['game_mode'] : 0,
+                yearsExp: response.data['years_of_exp'] ? response.data['years_of_exp'] : 10,
+                phoneNum: response.data['phone'] ? response.data['phone'] : 'N/A',
+                racket: response.data['racket'] ? response.data['racket'] : 'N/A',
+            }
+            setProfileData(userProfile);
+        }).catch((error) => {
+            console.log('response from server', error);
+            var code = error.code;
+            var message = error.message;
+            var details = error.details;
         })
-            .catch((error) => {
-                console.log(error);
-                var code = error.code;
-                var message = error.message;
-                var details = error.details;
-                console.log(code, message, details)
-
-            })
     }, []);
 
-    const testData = {
-        gender: 1,
-        description: 'test description text',
-        matchType: 1,
-        yearsExp: 10,
-        phoneNum: '604-338-7732',
-        racket: 'N/A'
+    if (profileData == null) {
+        return (
+            <View style={{ flex: 5, backgroundColor: '#3171CE', justifyContent: 'space-around', flexDirection: 'column' }}>
+                <ScrollView>
+                    <ActivityIndicator size="large" color="white" />
+                </ScrollView>
+            </View >
+
+        )
     }
-    const [profileData, setProfileData] = useState(testData);
-
-
-
-
     return (
         <View style={{ flex: 5, backgroundColor: '#3171CE', justifyContent: 'space-around', flexDirection: 'column' }}>
             <ScrollView>
                 <DisplayBanner />
                 <ButtonBar />
-                <Info profileData={profileData} onSubmit={(data) => { setProfileData(data) }} />
+                <Info profileData={profileData} onSubmit={(data) => { saveData(data); }} />
             </ScrollView>
         </View >
     )

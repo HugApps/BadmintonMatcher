@@ -24,7 +24,7 @@ app.post('/', (req, res) => res.send('helloworld'));
 exports.createNewUser = functions.auth.user().onCreate((user) => {
 
     const dbUrl = 'https://badmintonmatcher-4f217.firebaseio.com/clients/' + user.uid + '.json';
-    const profileUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+user.uid+".json";
+    const profileUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/" + user.uid + ".json";
 
     console.log(user);
     var createUser = axios.put(
@@ -37,45 +37,38 @@ exports.createNewUser = functions.auth.user().onCreate((user) => {
             profilePicUrL: user.photoURL
         }
     );
-    
+
     var userProfile = {
-        display_name:"",
-        email:user.email,
-        score:user.score,
-        summary:"",
-        phone:"",
-        years_of_exp:"",
-        sex:"",
-        game_mode:""
+        display_name: "",
+        email: user.email,
+        score: user.score,
+        summary: "",
+        phone: "",
+        years_of_exp: "",
+        sex: "",
+        game_mode: ""
     }
 
 
-    var createProfile = axios.put(profileUrl,userProfile);
-    return Promise.all([createUser,createProfile]);
+    var createProfile = axios.put(profileUrl, userProfile);
+    return Promise.all([createUser, createProfile]);
 });
 
 
 exports.loadUserProfile = functions.https.onCall((data, context) => {
-    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+context.auth.uid+".json";
-    return  axios.get(apiUrl).then((result)=>{
+    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/" + context.auth.uid + ".json";
+    return axios.get(apiUrl).then((result) => {
         return result.data;
-    }).catch((error)=>{return error})
+    }).catch((error) => { return error })
     // Authentication / user information is automatically added to the request.
 });
 
 exports.updateUserProfile = functions.https.onCall((data, context) => {
-    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/"+context.auth.uid+".json";
-
-
-    console.log('loadUserProfileCalled', context, data);
+    const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/" + context.auth.uid + ".json";
     const text = data.text;
-    // Authentication / user information is automatically added to the request.
-    axios.get()
-    const uid = context.auth.uid;
-    const name = context.auth.token.name || null;
-    const picture = context.auth.token.picture || null;
-    const email = context.auth.token.email || null;
-    return { data: "complete", context: {uid:uid,name:name,email:email,token:context.auth.token} }
+    return axios.patch(apiUrl,data).then((result) => {
+        return result.data;
+    }).catch((error) => { return error })
 });
 
 // load profile 
