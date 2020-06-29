@@ -203,6 +203,11 @@ export default function ProfileScreen(props) {
 
     );
 
+
+    const testCreateQueue =() =>{
+        let callable = functions().httpsCallable('getQueues');
+        callable().then(res=>{console.log("queue created",res)}).catch((error)=>{console.log('queue failed',error)})
+    }
     const saveData = (data) => {
         console.log('Updating profile',data);
         let callable = functions().httpsCallable('updateUserProfile');
@@ -217,6 +222,7 @@ export default function ProfileScreen(props) {
 
     useEffect(() => {
         let callable = functions().httpsCallable('loadUserProfile');
+        
 
         callable().then(response => {
             console.log('response from server', response.data);
@@ -254,6 +260,9 @@ export default function ProfileScreen(props) {
                 <DisplayBanner />
                 <ButtonBar />
                 <Info profileData={profileData} onSubmit={(data) => { saveData(data); }} />
+                <TouchableOpacity onPress={()=>{testCreateQueue()}}>
+                    <Text>Click me!</Text>
+                </TouchableOpacity>
             </ScrollView>
         </View >
     )
