@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "badmintonmatcher-4f217",
+  "private_key_id": "ec50e0817506e9d867d1f4ccb12865700317d996",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDZ+k16g+o9T9ME\nOnoQ9aBTMyVqBnRVFjkMmDxXm7VPJMpnH32ADiIz8YJbr15Mm+uIeF5bGmAdmLOS\nbRErvIhIjH1ppiiUdAVEho8aaDv2gHX1pVC9BBZNZ5nO+RrXyswzl3D+mTMDMI+U\nQpvYuVbH5fDYlzblGW6+mVlSKTxj72+RZPR/zBOp+5Djn/5SwjCtYeUhJp1XkC1a\nNmO7oNCNoxacPBqVWqKPwttYZ8daKjM6f/T/7fQgMThE4UzurjIY5fKdiSamv8dd\nmD/d130/0Fv93h8NNI7D+Cjz95txu3e2p1m5XQpBNwDj6UgSUKlOUz9ONX/NXNHu\nCFU8GgX1AgMBAAECggEABqhF9qyHOlVRCaNwksqHBEDUZHMrLpBrGyGeJth/AS+2\nN8/m0RhSvpk3xO2WTiAtTCHNqJols9mz/aWeR+KY8KBL0e7MyqXq0ETiI36/UBVs\nejK7mcjsFnPy0bcFdRrrltV0p8NNjcwionb7VAiVvYKzaFC2pj4bMK/gd2mCKj95\ncQ4zJBml905HbM7naIlMCrulRFGp4Jo7LVQV+VDu517JwjlGFz92X5KLQSg4+e9v\nJEXMUQfUYJkdzexD4z0b3cMBPKXYlYPSJ9yzGTqcmId6JpfmyYtXknMTgNYmoEiB\n9VIYq5lS3xKoDw89LPwQXSRId0pfRNGnS66YGJtXuQKBgQD94Fg0wqzKQBqtaZUM\n16xtwCftp3sR1pjIsxa4d1r1LHbgbCCMu81GbIXwMRLF93U/GXY1+pK4kyBg4h9D\ny71axlhbe8efOAo0/VXHZOnf/YkAmvCjkY5UngfF+ezA9rM3C9l52CcboMljNt2O\nCGqqM/WnKcFUVVlRSIvBzxqCKQKBgQDbzRWMgkiklEyB1hEDGIi4w/n2zDSmCmwe\nSkyuw7Qx3UCosstwR/byNjLpS3HvpAgshECoGH2TFe3MhR8xB50QjWnlaF3l8jOK\ndywKQQ1bCC6bW9gK6DVJz3tYEC5fFoo9z7pcR2cMjrtiAUAXrLGLoHLatwZvjOnr\nNQZBWmAW7QKBgHvVVVEO8DeLAzg4+vITtVCnXRKIEfjGgynKaTe7SEu0z5tyQoJD\nDMLgJojddvnHVZJcuhNkUPLlGPMI+RUZqRhBDVI6U0mvjRMByziCWa3fPldkPCKc\n2h8eIk6INNp+uzYLep37OEA6smDJn1IretPgml9ad6nKI9IJH9p+ScDZAoGAYnt9\nUDt/uN4JeZMkhDKV79M/SGkuncbFsryvpw5gyobL1cpmhKR57QSDwyvenPTuBKQt\nJCP0/9YvehebZih3I1d5PySIDeN7XGsQ/HcxOLxtxYZdQmXQmoWwSkDVxh0fS5qr\ncXU8os/A/aR5xyHFWz5Et+KRq6GDnbNgXh/UNfECgYEAtGrpQaMtlBVXgG6cOi3S\nOmJ6prnIilpxisyVYj3jH4GFbC928HW8V8TnNL+DeSr0d+1MhGSl6dXAJzMnL1jk\n2nKb+Vwlg652by5qn/rmzjBC/lPZFk1UZl8CjYLv2yTc8Wxl8TfM2Gb3YSuPSS+K\nDyhmfAWmx1ZwMYN35ERVQGc=\n-----END PRIVATE KEY-----\n",
+  "client_email": "badmintonmatcher-4f217@appspot.gserviceaccount.com",
+  "client_id": "115326608292364995350",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/badmintonmatcher-4f217%40appspot.gserviceaccount.com"
+}
