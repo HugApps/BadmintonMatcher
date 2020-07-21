@@ -1,0 +1,21 @@
+{
+  "name": "badmintonmatcher",
+  "version": "1.0.0",
+  "description": "prototype for badminton matcher app",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HugApps/BadmintonMatcher.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HugApps/BadmintonMatcher/issues"
+  },
+  "homepage": "https://github.com/HugApps/BadmintonMatcher#readme"
+}

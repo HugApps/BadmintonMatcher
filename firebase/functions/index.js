@@ -4,6 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const admin = require('firebase-admin');
 const axios = require('axios');
+const { query } = require('express');
+const { user } = require('firebase-functions/lib/providers/auth');
 
 
 admin.initializeApp();
@@ -81,17 +83,41 @@ exports.getQueues = functions.https.onCall((data, context) => {
     return dbRef.orderByChild('mmr').limitToFirst(2).once("value")
         .then((snapshotSmall) => {
             snapshotSmall.forEach((s) => {
-                results["smallest"].push({id:s.key,...s.val()});
+                results["smallest"].push({ id: s.key, value: s.val() });
             })
             return dbRef.orderByChild('mmr').limitToLast(2).once("value");
         })
         .then((large) => {
             large.forEach((s) => {
-                results["largest"].push({id:s.key, ...s.val()});
-            })
-            console.log(results["smallest"][0]["mmr"]);
-            var upperBoundDiff = results["largest"][1]["mmr"] - results["largest"][0]["mmr"];
-            var lowerBountDiff = results["smallest"][1]["mmr"] - results["smallest"][0]["mmr"];
+                results["largest"].push({ id: s.key, value: s.val() });
+            });
+
+
+
+
+            var upperBoundDiff = results["largest"][1]["value"]["mmr"] - results["largest"][0]["value"]["mmr"];
+            if (upperBoundDiff < 10000) {
+                db.ref('matches').push({
+                    team_1: results["largest"][1].id,
+                    team_2: results["largest"][0].id,
+                    team_1_mmr: results["largest"][1]["value"]["mmr"],
+                    team_2_mmr: results["largest"][0]["value"]["mmr"]
+                });
+                //create new match object with their ids
+            }
+
+            var lowerBountDiff = results["smallest"][1]["value"]["mmr"] - results["smallest"][0]["value"]["mmr"];
+            if (upperBoundDiff < 10000) {
+                db.ref('matches').push({
+                    team_1: results["smallest"][1].id,
+                    team_2: results["smallest"][0].id,
+                    team_1_mmr: results["smallest"][1]["value"]["mmr"],
+                    team_2_mmr: results["smallest"][0]["value"]["mmr"]
+                });
+                //create new match object with their ids
+
+            }
+
 
 
 
@@ -102,6 +128,139 @@ exports.getQueues = functions.https.onCall((data, context) => {
     // return axios.get(apiUrl).then((result)=>{return result.data}).catch((error)=>{return error})
 });
 
+async function createMatchBaseOnMMR() {
+    var results = { "smallest": [], "largest": [] }
+    var dbRef = db.ref('match_queue')
+    return dbRef.orderByChild('mmr').limitToFirst(2).once("value")
+        .then((snapshotSmall) => {
+            snapshotSmall.forEach((s) => {
+                results["smallest"].push({ id: s.key, value: s.val() });
+            })
+            return dbRef.orderByChild('mmr').limitToLast(2).once("value");
+        })
+        .then((large) => {
+            large.forEach((s) => {
+                results["largest"].push({ id: s.key, value: s.val() });
+            });
+
+            var upperBoundDiff = results["largest"][1]["value"]["mmr"] - results["largest"][0]["value"]["mmr"];
+            if (upperBoundDiff < 10000) {
+                db.ref('matches').push({
+                    team_1: results["largest"][1].id,
+                    team_2: results["largest"][0].id,
+                    team_1_mmr: results["largest"][1]["value"]["mmr"],
+                    team_2_mmr: results["largest"][0]["value"]["mmr"]
+                });
+                //create new match object with their ids
+
+            }
+
+            var lowerBountDiff = results["smallest"][1]["value"]["mmr"] - results["smallest"][0]["value"]["mmr"];
+            if (upperBoundDiff < 10000) {
+                db.ref('matches').push({
+                    team_1: results["smallest"][1].id,
+                    team_2: results["smallest"][0].id,
+                    team_1_mmr: results["smallest"][1]["value"]["mmr"],
+                    team_2_mmr: results["smallest"][0]["value"]["mmr"]
+                });
+                //create new match object with their ids
+
+            }
+
+
+
+
+            return { lowerDiff: lowerBountDiff, upperDiff: upperBoundDiff }
+        });
+
+}
+
+
+
+exports.clearMatchedQueue = functions.database.ref('matches/{id}').onCreate(async (snapShot, context) => {
+    //Delete queue referenced in match object
+    let match = snapShot.val();
+    console.log('team 1 id', match['team_1']);
+    console.log('team 2 id', match['team_2']);
+    return db.ref('match_queue/' + match['team_1']).remove()
+        .then((ra) => { return db.ref('match_queue/' + match['team_2']).remove() })
+        .then((rb) => { return snapShot.ref.set(snapShot.val()) })
+        .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
+
+        )
+
+})
+
+
+
+
+exports.createMatches = functions.database.ref('/match_queue/{id}')
+    .onCreate(async (snapShot, context) => {
+        //default range to +/- 500 mmr points
+        let defaultRange = 500;
+        let minDiff = 90000;
+        let updatedData = snapShot.val();
+        let bestMatch = null;
+        let needRangeAdjust = {};
+        var currentQueues = db.ref('match_queue');
+        let lowMMRBound = parseInt(updatedData["mmr"]) - defaultRange;
+        let highMMRBound = parseInt(updatedData["mmr"]) + defaultRange;
+        currentQueues.orderByChild('mmr').startAt(lowMMRBound).endAt(highMMRBound).limitToFirst(10).once("value").then((results) => {
+            let potentialMatches = [];
+
+            results.forEach((s) => {
+                if (s.key != snapShot.key) {
+                    potentialMatches.push({ id: s.key, val: s.val() })
+                }
+
+            })
+
+            //find one perfect match for this player
+            potentialMatches.forEach((player) => {
+                //is other player's range conditions satisfied?
+                let withinRange = false;
+                let opponentRangeHigh = player.val["mmr"] + player.val["range"];
+                let opponentRangeLow = player.val["mmr"] - player.val["range"];
+                if (updatedData["mmr"] >= opponentRangeLow && updatedData["mmr"] <= opponentRangeHigh) {
+                    withinRange = true;
+                }
+
+                let diff = Math.abs(updatedData["mmr"] - player.val["mmr"]);
+
+                if (diff <= minDiff && withinRange) {
+                    minDiff = diff;
+                    bestMatch = player;
+                } else {
+                    let queryKey = player.id + '/range';
+                    needRangeAdjust[queryKey] = player.val["range"] + 100;
+                    //not a valid match reduce their mmr
+                }
+            })
+
+            // current player cannot find best match, reduce their range
+
+            console.log('update hashmap', needRangeAdjust);
+
+            return currentQueues.update(needRangeAdjust).then((success) => {
+
+                if (bestMatch == null) {
+                    updatedData['range'] = updatedData['range'] + 100;
+                    return snapShot.ref.set(updatedData);
+                } else {
+                    return db.ref('matches').push({
+                        team_1: updatedData['user_id'],
+                        team_2: bestMatch.id,
+                        team_1_mmr: updatedData["mmr"],
+                        team_2_mmr: bestMatch.val["mmr"]
+                    }).then((result) => {
+                        return snapShot.ref.set(updatedData);
+                    });
+
+                }
+
+            })
+        })
+    })
 
 
 
@@ -116,14 +275,17 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
         var new_queue = {
             user_id: context.auth.uid,
             match_type: 0,
+            range: 500,
             mmr: result.data,
             priority: 0,
             time_stamp: new Date()
         }
 
-        axios.put(apiUrl, new_queue);
-        return { status: 'ok' }
-    }).catch((error) => { return { status: 'error' } });
+
+        return axios.put(apiUrl, new_queue)
+    }).then((result) => { return result.data })
+
+        .catch((error) => { return { status: 'error' } });
 
 
 
@@ -132,9 +294,14 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
 
 exports.loadUserProfile = functions.https.onCall((data, context) => {
     const apiUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/" + context.auth.uid + ".json";
+
     return axios.get(apiUrl).then((result) => {
         return result.data;
-    }).catch((error) => { return error })
+    }).catch((error) => {
+        return {
+            status: context.auth.uid,
+        }
+    });
     // Authentication / user information is automatically added to the request.
 });
 

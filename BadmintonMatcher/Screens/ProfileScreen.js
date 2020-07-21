@@ -205,8 +205,8 @@ export default function ProfileScreen(props) {
 
 
     const testCreateQueue =() =>{
-        let callable = functions().httpsCallable('getQueues');
-        callable().then(res=>{console.log("queue created",res)}).catch((error)=>{console.log('queue failed',error)})
+        let callable = functions().httpsCallable('addToMatchMakingQueue');
+        callable().then((res)=>{console.log("queue created",res)}).catch((error)=>{console.log('queue failed',error)})
     }
     const saveData = (data) => {
         console.log('Updating profile',data);
@@ -237,7 +237,7 @@ export default function ProfileScreen(props) {
             }
             setProfileData(userProfile);
         }).catch((error) => {
-            console.log('response from server', error);
+            console.log('error from server', error);
             var code = error.code;
             var message = error.message;
             var details = error.details;
