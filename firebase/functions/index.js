@@ -37,6 +37,7 @@ exports.createNewUser = functions.auth.user().onCreate((user) => {
             email: user.email,
             name: user.displayName,
             score: 1000,
+            matches: {},
             profilePicUrL: user.photoURL
         }
     );
@@ -57,22 +58,89 @@ exports.createNewUser = functions.auth.user().onCreate((user) => {
     return Promise.all([createUser, createProfile]);
 });
 
-/*exports.processQueue = functions.database.ref('/match_queue')
-    .onCreate((snapshot, context) => {
-      // Grab the current value of what was written to the Realtime Database.
-      const original = snapshot.val();
 
 
-      const apiUrl = 'https://badmintonmatcher-4f217.firebaseio.com/match_queue.json?orderBy=;
+exports.pollMatchQueue = functions.https.onCall((data, context) => {
+    let user_id = context.auth.uid;
+    let match_queue_ref = db.ref('match_queue/' + user_id);
+    console.log('user id used for polling', user_id);
+    // find if queue with user exists, then use it to find a match, or update the range
+    return match_queue_ref.once("value")
+        .then((queue) => {
+            //nothing was found
+            if (queue.val() == null) {
+                return { data: 'No queue with id found' }
+            } else {
 
-      var currentQueue = axios.get(apiUrl)
-      const priority= original.priority;
-      // You must return a Promise when performing asynchronous tasks inside a Functions such as
-      // writing to the Firebase Realtime Database.
-      // Setting an "uppercase" sibling in the Realtime Database returns a Promise.
-      return snapshot.ref.parent.child('uppercase').set(uppercase);
-    });
-*/
+                let currentPlayerQueue = queue.val();
+                let range = currentPlayerQueue["range"];
+                let bestMatch = null;
+                let needRangeAdjust = {};
+                var currentQueues = db.ref('match_queue');
+                let lowMMRBound = parseInt(currentPlayerQueue["mmr"]) - range;
+                let highMMRBound = parseInt(currentPlayerQueue["mmr"]) + range;
+                console.log('searching through other players')
+                return currentQueues.orderByChild('mmr').startAt(lowMMRBound).endAt(highMMRBound).limitToFirst(5).once("value").then((results) => {
+                    
+                    let potentialMatches = [ ];
+                    console.log('range find results',results.numChildren() ,potentialMatches.length);
+                    // for each result find a player that is within range
+                    results.forEach((player) => {
+                    
+                        if (player.key != queue.key) {
+                            console.log(player.val());
+                            let withinRange = false;
+                            let opponentRangeHigh = player.val()["mmr"] + player.val()["range"];
+                            let opponentRangeLow = player.val()["mmr"] - player.val()["range"];
+                            let difference = Math.abs(player.val()["mmr"] - currentPlayerQueue["mmr"]);
+                            console.log('range search',opponentRangeLow,player.val()["mmr"],opponentRangeHigh,difference);
+                            if (currentPlayerQueue["mmr"] >= opponentRangeLow && currentPlayerQueue["mmr"] <= opponentRangeHigh) {
+                                withinRange = true;
+                            }
+
+                            if(withinRange){
+                                potentialMatches.push({ id: player.key, val: player.val() ,difference:difference});
+                            }
+                           
+                        }
+
+                    });
+
+                    //If no matches, increase current player's range
+                    if(potentialMatches.length == 0) {
+                        console.log('no matches',potentialMatches.length);
+                        return db.ref('match_queue/' + context.auth.uid + '/range').set(range + 100).then((result)=>{ console.log('updated range');return {data:result}})
+                    } else {
+                        console.log('some matches');
+                        potentialMatches.sort((a,b)=>{
+                            return a.difference - b.difference;
+                        });
+
+                        console.log('sorted some matches',potentialMatches.length,potentialMatches);
+                        return db.ref('matches').push({
+                            sets: {},
+                            status: 'queued',
+                            venue_id: 1,
+                            time: null,
+                            date: null,
+                            team_1: currentPlayerQueue['user_id'],
+                            team_2: potentialMatches[0].id,
+                            team_1_mmr: currentPlayerQueue["mmr"],
+                            team_2_mmr: currentPlayerQueue["mmr"]
+                        }).then((result) => {
+                            console.log('match created'); return {data:result};
+                        });
+
+                    }
+
+                })
+                .catch((error)=>{ console.log(error); return {error:error}})
+            }
+        })
+        .catch((error) => { return { data: error } });
+})
+
+
 
 
 //for testing orderBy
@@ -128,78 +196,47 @@ exports.getQueues = functions.https.onCall((data, context) => {
     // return axios.get(apiUrl).then((result)=>{return result.data}).catch((error)=>{return error})
 });
 
-async function createMatchBaseOnMMR() {
-    var results = { "smallest": [], "largest": [] }
-    var dbRef = db.ref('match_queue')
-    return dbRef.orderByChild('mmr').limitToFirst(2).once("value")
-        .then((snapshotSmall) => {
-            snapshotSmall.forEach((s) => {
-                results["smallest"].push({ id: s.key, value: s.val() });
-            })
-            return dbRef.orderByChild('mmr').limitToLast(2).once("value");
-        })
-        .then((large) => {
-            large.forEach((s) => {
-                results["largest"].push({ id: s.key, value: s.val() });
-            });
-
-            var upperBoundDiff = results["largest"][1]["value"]["mmr"] - results["largest"][0]["value"]["mmr"];
-            if (upperBoundDiff < 10000) {
-                db.ref('matches').push({
-                    team_1: results["largest"][1].id,
-                    team_2: results["largest"][0].id,
-                    team_1_mmr: results["largest"][1]["value"]["mmr"],
-                    team_2_mmr: results["largest"][0]["value"]["mmr"]
-                });
-                //create new match object with their ids
-
-            }
-
-            var lowerBountDiff = results["smallest"][1]["value"]["mmr"] - results["smallest"][0]["value"]["mmr"];
-            if (upperBoundDiff < 10000) {
-                db.ref('matches').push({
-                    team_1: results["smallest"][1].id,
-                    team_2: results["smallest"][0].id,
-                    team_1_mmr: results["smallest"][1]["value"]["mmr"],
-                    team_2_mmr: results["smallest"][0]["value"]["mmr"]
-                });
-                //create new match object with their ids
-
-            }
-
-
-
-
-            return { lowerDiff: lowerBountDiff, upperDiff: upperBoundDiff }
-        });
-
-}
-
-
-
 exports.clearMatchedQueue = functions.database.ref('matches/{id}').onCreate(async (snapShot, context) => {
     //Delete queue referenced in match object
     let match = snapShot.val();
-    console.log('team 1 id', match['team_1']);
-    console.log('team 2 id', match['team_2']);
     return db.ref('match_queue/' + match['team_1']).remove()
+        // remove the players from the queue
         .then((ra) => { return db.ref('match_queue/' + match['team_2']).remove() })
+        //add the match to each player's matches
+        .then(
+            () => {
+                return db.ref('clients/' + match['team_1'] + '/matches').push(snapShot.key)
+            })
+
+        .then(
+            () => {
+                return db.ref('clients/' + match['team_2'] + '/matches').push(snapShot.key)
+            })
         .then((rb) => { return snapShot.ref.set(snapShot.val()) })
         .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
 
         )
-
 })
 
+// INSTead of updating range on initial QUEUE entry, do it during poll check, use players search range as default
+//Poll every 1 to 5 mins to create a match, if no match increase the search range ( player search range + some factor)
 
 
 
 exports.createMatches = functions.database.ref('/match_queue/{id}')
     .onCreate(async (snapShot, context) => {
         //default range to +/- 500 mmr points
+
         let defaultRange = 500;
-        let minDiff = 90000;
         let updatedData = snapShot.val();
+        if (updatedData['range']) {
+            defaultRange = updatedData['range']
+        } else {
+            updatedData['range'] = defaultRange;
+        }
+
+        console.log('query with range', defaultRange);
+        let minDiff = 90000;
         let bestMatch = null;
         let needRangeAdjust = {};
         var currentQueues = db.ref('match_queue');
@@ -214,6 +251,8 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
                 }
 
             })
+
+            console.log(potentialMatches);
 
             //find one perfect match for this player
             potentialMatches.forEach((player) => {
@@ -239,7 +278,6 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
 
             // current player cannot find best match, reduce their range
 
-            console.log('update hashmap', needRangeAdjust);
 
             return currentQueues.update(needRangeAdjust).then((success) => {
 
@@ -248,6 +286,11 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
                     return snapShot.ref.set(updatedData);
                 } else {
                     return db.ref('matches').push({
+                        sets: {},
+                        status: 'queued',
+                        venue_id: 1,
+                        time: null,
+                        date: null,
                         team_1: updatedData['user_id'],
                         team_2: bestMatch.id,
                         team_1_mmr: updatedData["mmr"],
