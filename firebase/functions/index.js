@@ -58,6 +58,19 @@ exports.createNewUser = functions.auth.user().onCreate((user) => {
     return Promise.all([createUser, createProfile]);
 });
 
+exports.getSearchStatus = functions.https.onCall((data, context) => {
+    let user_id = context.auth.uid;
+    let match_queue_ref = db.ref('match_queue/' + user_id);
+    return match_queue_ref.once("value")
+        .then((queue) => {
+            //nothing was found
+            if (queue.val() == null) {
+                return { data: null }
+            } else {
+                return { data: queue.key }
+            }
+        }).catch((error) => { return { data: 'something whent wrong' } })
+});
 
 
 exports.pollMatchQueue = functions.https.onCall((data, context) => {
@@ -69,6 +82,8 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
         .then((queue) => {
             //nothing was found
             if (queue.val() == null) {
+                // could be case where a new match is already found, so when user is polling their queue is already gone.
+
                 return { data: 'No queue with id found' }
             } else {
 
@@ -81,42 +96,43 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                 let highMMRBound = parseInt(currentPlayerQueue["mmr"]) + range;
                 console.log('searching through other players')
                 return currentQueues.orderByChild('mmr').startAt(lowMMRBound).endAt(highMMRBound).limitToFirst(5).once("value").then((results) => {
-                    
-                    let potentialMatches = [ ];
-                    console.log('range find results',results.numChildren() ,potentialMatches.length);
+
+                    let potentialMatches = [];
+                    console.log('range find results', results.numChildren(), potentialMatches.length);
                     // for each result find a player that is within range
                     results.forEach((player) => {
-                    
+
                         if (player.key != queue.key) {
                             console.log(player.val());
                             let withinRange = false;
                             let opponentRangeHigh = player.val()["mmr"] + player.val()["range"];
                             let opponentRangeLow = player.val()["mmr"] - player.val()["range"];
                             let difference = Math.abs(player.val()["mmr"] - currentPlayerQueue["mmr"]);
-                            console.log('range search',opponentRangeLow,player.val()["mmr"],opponentRangeHigh,difference);
+                            console.log('range search', opponentRangeLow, player.val()["mmr"], opponentRangeHigh, difference);
                             if (currentPlayerQueue["mmr"] >= opponentRangeLow && currentPlayerQueue["mmr"] <= opponentRangeHigh) {
                                 withinRange = true;
                             }
 
-                            if(withinRange){
-                                potentialMatches.push({ id: player.key, val: player.val() ,difference:difference});
+                            if (withinRange) {
+                                potentialMatches.push({ id: player.key, val: player.val(), difference: difference });
                             }
-                           
+
                         }
 
                     });
 
+                    console.log('potentialMatches', potentialMatches);
                     //If no matches, increase current player's range
-                    if(potentialMatches.length == 0) {
-                        console.log('no matches',potentialMatches.length);
-                        return db.ref('match_queue/' + context.auth.uid + '/range').set(range + 100).then((result)=>{ console.log('updated range');return {data:result}})
+                    if (potentialMatches.length == 0) {
+                        console.log('no matches', potentialMatches.length);
+                        return db.ref('match_queue/' + context.auth.uid + '/range').set(range + 100).then((result) => { console.log('updated range'); return { data: 'searching' } })
                     } else {
                         console.log('some matches');
-                        potentialMatches.sort((a,b)=>{
+                        potentialMatches.sort((a, b) => {
                             return a.difference - b.difference;
                         });
 
-                        console.log('sorted some matches',potentialMatches.length,potentialMatches);
+                        console.log('sorted some matches', potentialMatches.length, potentialMatches);
                         return db.ref('matches').push({
                             sets: {},
                             status: 'queued',
@@ -126,21 +142,26 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                             team_1: currentPlayerQueue['user_id'],
                             team_2: potentialMatches[0].id,
                             team_1_mmr: currentPlayerQueue["mmr"],
-                            team_2_mmr: currentPlayerQueue["mmr"]
+                            team_2_mmr: potentialMatches[0].val["mmr"]
                         }).then((result) => {
-                            console.log('match created'); return {data:result};
+                            console.log('match created', result); return { data: 'match found' };
                         });
 
                     }
 
                 })
-                .catch((error)=>{ console.log(error); return {error:error}})
+                .catch((error) => { console.log(error.details,error.code); return { error: "error here???" } })
             }
         })
-        .catch((error) => { return { data: error } });
+        .catch((error) => { return { data: 'error' } });
 })
 
 
+exports.cancelQueue = functions.https.onCall((data,context)=>{
+    db.ref('match_queue/'+context.auth.uid).remove().then((result)=>{return{status:'removed',result:result}}).catch((error)=>{
+        return {status:'error removing'}
+    })
+});
 
 
 //for testing orderBy
@@ -205,12 +226,12 @@ exports.clearMatchedQueue = functions.database.ref('matches/{id}').onCreate(asyn
         //add the match to each player's matches
         .then(
             () => {
-                return db.ref('clients/' + match['team_1'] + '/matches').push(snapShot.key)
+                return db.ref('clients/' + match['team_1'] + '/matches').push({match_id:snapShot.key,status:'queued'})
             })
 
         .then(
             () => {
-                return db.ref('clients/' + match['team_2'] + '/matches').push(snapShot.key)
+                return db.ref('clients/' + match['team_2'] + '/matches').push({match_id:snapShot.key,status:'queued'})
             })
         .then((rb) => { return snapShot.ref.set(snapShot.val()) })
         .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
@@ -326,9 +347,11 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
 
 
         return axios.put(apiUrl, new_queue)
-    }).then((result) => { return result.data })
+    })
+    .then((result) => { return result.data })
+    
 
-        .catch((error) => { return { status: 'error' } });
+    .catch((error) => { return { status: 'error' } });
 
 
 

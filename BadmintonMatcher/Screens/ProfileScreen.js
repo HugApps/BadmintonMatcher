@@ -204,9 +204,15 @@ export default function ProfileScreen(props) {
     );
 
 
+
+    const pollQueue =()=>{
+        let callable = functions().httpsCallable('pollMatchQueue');
+        callable().then((res)=>{console.log("queue result",res)}).catch((error)=>{console.log('queue failed',error)})
+    }
+
     const testCreateQueue =() =>{
         let callable = functions().httpsCallable('addToMatchMakingQueue');
-        callable().then((res)=>{console.log("queue created",res)}).catch((error)=>{console.log('queue failed',error)})
+        callable().then((res)=>{console.log("queue created",res.data)}).catch((error)=>{console.log('queue failed',error)})
     }
     const saveData = (data) => {
         console.log('Updating profile',data);
@@ -257,11 +263,15 @@ export default function ProfileScreen(props) {
     return (
         <View style={{ flex: 5, backgroundColor: '#3171CE', justifyContent: 'space-around', flexDirection: 'column' }}>
             <ScrollView>
-                <DisplayBanner />
+            
                 <ButtonBar />
                 <Info profileData={profileData} onSubmit={(data) => { saveData(data); }} />
                 <TouchableOpacity onPress={()=>{testCreateQueue()}}>
-                    <Text>Click me!</Text>
+                    <Text>find match</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={()=>{pollQueue()}}>
+                    <Text>poll</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View >

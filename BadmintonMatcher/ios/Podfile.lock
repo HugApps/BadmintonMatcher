@@ -16,6 +16,9 @@ PODS:
     - FirebaseAuth (~> 6.5.3)
   - Firebase/CoreOnly (6.25.0):
     - FirebaseCore (= 6.7.1)
+  - Firebase/Database (6.25.0):
+    - Firebase/CoreOnly
+    - FirebaseDatabase (~> 6.2.1)
   - Firebase/Functions (6.25.0):
     - Firebase/CoreOnly
     - FirebaseFunctions (~> 2.5.1)
@@ -38,6 +41,10 @@ PODS:
     - GoogleUtilities/Logger (~> 6.5)
     - nanopb (~> 1.30905.0)
   - FirebaseCoreDiagnosticsInterop (1.2.0)
+  - FirebaseDatabase (6.2.1):
+    - FirebaseAuthInterop (~> 1.0)
+    - FirebaseCore (~> 6.0)
+    - leveldb-library (~> 1.22)
   - FirebaseFunctions (2.5.1):
     - FirebaseAuthInterop (~> 1.0)
     - FirebaseCore (~> 6.0)
@@ -118,6 +125,7 @@ PODS:
   - GoogleUtilities/Reachability (6.6.0):
     - GoogleUtilities/Logger
   - GTMSessionFetcher/Core (1.4.0)
+  - leveldb-library (1.22)
   - nanopb (1.30905.0):
     - nanopb/decode (= 1.30905.0)
     - nanopb/encode (= 1.30905.0)
@@ -360,6 +368,10 @@ PODS:
     - Firebase/Auth (~> 6.25.0)
     - React
     - RNFBApp
+  - RNFBDatabase (7.3.2):
+    - Firebase/Database (~> 6.25.0)
+    - React
+    - RNFBApp
   - RNFBFunctions (7.1.3):
     - Firebase/Functions (~> 6.25.0)
     - React
@@ -425,6 +437,7 @@ DEPENDENCIES:
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
+  - "RNFBDatabase (from `../node_modules/@react-native-firebase/database`)"
   - "RNFBFunctions (from `../node_modules/@react-native-firebase/functions`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -442,6 +455,7 @@ SPEC REPOS:
     - FirebaseCore
     - FirebaseCoreDiagnostics
     - FirebaseCoreDiagnosticsInterop
+    - FirebaseDatabase
     - FirebaseFunctions
     - Flipper
     - Flipper-DoubleConversion
@@ -454,6 +468,7 @@ SPEC REPOS:
     - GoogleDataTransportCCTSupport
     - GoogleUtilities
     - GTMSessionFetcher
+    - leveldb-library
     - nanopb
     - OpenSSL-Universal
     - PromisesObjC
@@ -516,6 +531,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBAuth:
     :path: "../node_modules/@react-native-firebase/auth"
+  RNFBDatabase:
+    :path: "../node_modules/@react-native-firebase/database"
   RNFBFunctions:
     :path: "../node_modules/@react-native-firebase/functions"
   RNGestureHandler:
@@ -540,6 +557,7 @@ SPEC CHECKSUMS:
   FirebaseCore: 6023faeada5afa95a349fccafb40900e32e9ac42
   FirebaseCoreDiagnostics: 4a773a47bd83bbd5a9b1ccf1ce7caa8b2d535e67
   FirebaseCoreDiagnosticsInterop: 296e2c5f5314500a850ad0b83e9e7c10b011a850
+  FirebaseDatabase: 4e99c0c475d1ee0aa64ae2b53c93f80b7b60d7d9
   FirebaseFunctions: 5af7c35d1c5e41608fecbb667eb6c4e672e318d0
   Flipper: 6c1f484f9a88d30ab3e272800d53688439e50f69
   Flipper-DoubleConversion: 38631e41ef4f9b12861c67d17cb5518d06badc41
@@ -554,6 +572,7 @@ SPEC CHECKSUMS:
   GoogleDataTransportCCTSupport: d70a561f7d236af529fee598835caad5e25f6d3d
   GoogleUtilities: 39530bc0ad980530298e9c4af8549e991fd033b1
   GTMSessionFetcher: 6f5c8abbab8a9bce4bb3f057e317728ec6182b10
+  leveldb-library: 55d93ee664b4007aac644a782d11da33fba316f7
   nanopb: c43f40fadfe79e8b8db116583945847910cbabc9
   OpenSSL-Universal: 8b48cc0d10c1b2923617dfe5c178aa9ed2689355
   PromisesObjC: c119f3cd559f50b7ae681fa59dc1acd19173b7e6
@@ -580,6 +599,7 @@ SPEC CHECKSUMS:
   RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
   RNFBApp: 25a6476dfd7aac2bcbe984f569875bcea122895b
   RNFBAuth: 52e7af4244e6adf39237ab8e94d6d51f2c1bf450
+  RNFBDatabase: fac439ba07d2a3b3f332088f5361dbb9dc83036d
   RNFBFunctions: ef712cfa62f69d5c7f2937980f71e8acaf7d7713
   RNGestureHandler: 8f09cd560f8d533eb36da5a6c5a843af9f056b38
   RNReanimated: b5ccb50650ba06f6e749c7c329a1bc3ae0c88b43
