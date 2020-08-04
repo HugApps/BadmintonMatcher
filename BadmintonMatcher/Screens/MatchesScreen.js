@@ -67,7 +67,8 @@ export default function MatchesScreen(props) {
     const listItem = ({item,index})=>{
         return(
 
-            <View>
+            <View style={{flexDirection:'row'}}>
+                <Text></Text>
                 <Text>{item.status}</Text>
             </View>
 

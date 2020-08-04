@@ -151,7 +151,7 @@ export default function MatchSearchScreen(props) {
             let newMatch = snapShot.val();
             console.log('error here ', newMatch);
 
-            return database().ref('/matches/' + newMatch.match_id).once('value').then((match_details) => {
+            return database().ref('/matches/').once('value').then((match_details) => {
                 console.log('match found', match_details.val())
                 callback(match_details.val());
                 return;
