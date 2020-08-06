@@ -1,27 +1,17 @@
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
+import database from '@react-native-firebase/database';
 
 import {
-    SafeAreaView,
-    StyleSheet,
     ScrollView,
     View,
     Text,
-    StatusBar,
     Image,
     TextInput,
     TouchableOpacity, ActivityIndicator
 } from 'react-native';
 
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import {
-    DrawerContentScrollView,
-    DrawerItemList,
-    DrawerItem,
-} from '@react-navigation/drawer';
 import auth from '@react-native-firebase/auth';
-import functions from '@react-native-firebase/functions';
 
 
 /// @refresh reset 
@@ -34,10 +24,10 @@ function InputRow(props) {
 
             <Text style={{ fontSize: 12, color: 'white' }}>{props.label}</Text>
             <TextInput
-                style={{ color: 'white' }}
-                placeholder={props.value.toString()}
+                style={{ color: 'black' , width:100,backgroundColor:'white'}}
+                placeholder={props.value ? props.value.toString() :" "}
                 editable={editable}
-                placeholderTextColor={'white'}
+                placeholderTextColor={'black'}
                 onChangeText={(text) => { props.onEdit(text) }}
             />
 
@@ -77,9 +67,9 @@ function DisplayBanner(props) {
         <View style={{ flex: 1, margin: 5, maxHeight: '50%', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Text style={{ color: 'white', fontSize: 25, margin: 10 }}>Personal Profile</Text>
             <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={require("./assets/test_profile.jpg")}></Image>
-            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{user.displayName ? user.displayName : user.email}</Text>
-            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{"MMR:6500"}</Text>
-            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{user.email}</Text>
+            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.display_name}</Text>
+            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>MMR:{props.data.mmr}</Text>
+            <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.email}</Text>
         </View>
     )
 }
@@ -103,7 +93,7 @@ function SelectButtons(props) {
 
 function Info(props) {
     let profileData = props.profileData;
- 
+
     const [edit, setEdit] = useState('preview')
     const [gender, setGender] = useState(props.profileData['gender'])
     const [description, setDescription] = useState(props.profileData['description'])
@@ -116,10 +106,10 @@ function Info(props) {
 
         return {
             gender: gender,
-            summary: description,
-            gameMode: matchType,
+            description: description,
+            game_mode: matchType,
             years_of_exp: yearsExp,
-            phone: phoneNum,
+            phoneNum: phoneNum,
             racket: racket
         };
     }
@@ -205,50 +195,51 @@ export default function ProfileScreen(props) {
 
 
 
-    const pollQueue =()=>{
-        let callable = functions().httpsCallable('pollMatchQueue');
-        callable().then((res)=>{console.log("queue result",res)}).catch((error)=>{console.log('queue failed',error)})
-    }
 
-    const testCreateQueue =() =>{
-        let callable = functions().httpsCallable('addToMatchMakingQueue');
-        callable().then((res)=>{console.log("queue created",res.data)}).catch((error)=>{console.log('queue failed',error)})
-    }
     const saveData = (data) => {
-        console.log('Updating profile',data);
-        let callable = functions().httpsCallable('updateUserProfile');
-
-        callable(data).then(res => {
-            console.log('update result', res.data);
-        });
-
+        console.log('data to be sent',data);
+        database().ref('/clients/' + user.uid +'/profile').set(data).then((result)=>{
+            console.log('saving results',result);
+        })
 
 
     }
 
     useEffect(() => {
-        let callable = functions().httpsCallable('loadUserProfile');
-        
 
-        callable().then(response => {
-            console.log('response from server', response.data);
+        database().ref('/clients/' + user.uid ).once('value').then(snapShot => {
+            console.log('profile data loading result',snapShot.val())
+            let userDetails = snapShot.val();
+            let profileData = snapShot.val()['profile'];
+
+
             let userProfile = {
+                display_name : userDetails.display_name,
+                mmr:userDetails.mmr,
                 test: 'test',
-                gender: response.data['gender'] ? response.data['gender'] : 1,
-                description: response.data['summary'] ? response.data['summary'] : ' ',
-                matchType: response.data['game_mode'] ? response.data['game_mode'] : 0,
-                yearsExp: response.data['years_of_exp'] ? response.data['years_of_exp'] : 10,
-                phoneNum: response.data['phone'] ? response.data['phone'] : 'N/A',
-                racket: response.data['racket'] ? response.data['racket'] : 'N/A',
+                gender: profileData['gender'] ? profileData['gender'] : 1,
+                description: profileData['description'] ? profileData['description'] : ' ',
+                matchType: profileData['game_mode'] ? profileData['game_mode'] : 0,
+                yearsExp: profileData['years_of_exp'] ? profileData['years_of_exp'] : 10,
+                phoneNum: profileData['phoneNum'] ? profileData['phoneNum'] : 'N/A',
+                racket: profileData['racket'] ? profileData['racket'] : 'N/A',
             }
             setProfileData(userProfile);
-        }).catch((error) => {
-            console.log('error from server', error);
-            var code = error.code;
-            var message = error.message;
-            var details = error.details;
         })
-    }, []);
+            .catch((error) => {
+                console.log('profile load error', error);
+                let userProfile = {
+                    test: 'test',
+                    gender: 1,
+                    description: "",
+                    matchType: 0,
+                    yearsExp: 0,
+                    phoneNum: "",
+                    racket: "",
+                }
+                setProfileData(userProfile);
+            })
+    }, [ ]);
 
     if (profileData == null) {
         return (
@@ -263,16 +254,11 @@ export default function ProfileScreen(props) {
     return (
         <View style={{ flex: 5, backgroundColor: '#3171CE', justifyContent: 'space-around', flexDirection: 'column' }}>
             <ScrollView>
-            
-                <ButtonBar />
-                <Info profileData={profileData} onSubmit={(data) => { saveData(data); }} />
-                <TouchableOpacity onPress={()=>{testCreateQueue()}}>
-                    <Text>find match</Text>
-                </TouchableOpacity>
 
-                <TouchableOpacity onPress={()=>{pollQueue()}}>
-                    <Text>poll</Text>
-                </TouchableOpacity>
+                <DisplayBanner data={profileData}/>
+
+                <ButtonBar />
+                <Info profileData={profileData} onSubmit={(data) => { saveData(data) }} />
             </ScrollView>
         </View >
     )
