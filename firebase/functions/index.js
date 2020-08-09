@@ -24,33 +24,60 @@ const db = admin.database();
 
 //Users
 //Create : sign_up
+
+
+
+
+exports.signUp = functions.https.onCall((data, context) => {
+    
+    let user_details = {
+        email: data.email,
+        emailVerified: true,
+        password: data.password,
+        displayName: data.displayName,
+        photoURL: data.photoURL ? data.photoURL : null,
+        disabled: false
+    }
+
+    console.log('debug user_details', user_details);
+
+    return admin.auth().createUser(user_details).then((result) => {
+        if (result) {
+            console.log('sign up result',result);
+            return { data: 'success',result:result }
+        }
+    })
+    .catch((error) => {
+            console.log('sign up error');
+            return { data: "registration error" }
+    })
+
+});
+
+
+
 exports.createNewUser = functions.auth.user().onCreate((user) => {
 
     const dbUrl = 'https://badmintonmatcher-4f217.firebaseio.com/clients/' + user.uid + '.json';
     const profileUrl = "https://badmintonmatcher-4f217.firebaseio.com/profiles/" + user.uid + ".json";
 
-    console.log(user);
+
     var createUser = axios.put(
         dbUrl,
         {
             user_id: user.uid,
             email: user.email,
             name: user.displayName,
-            score: 1000,
-            matches: {},
+            mmr: 2000,
+            display_name: user.displayName,
             profilePicUrL: user.photoURL
         }
     );
 
     var userProfile = {
-        display_name: "",
+        display_name: user.displayName,
         email: user.email,
-        score: user.score,
-        summary: "",
-        phone: "",
-        years_of_exp: "",
-        sex: "",
-        game_mode: ""
+        mmr: user.mmr,
     }
 
 
@@ -150,16 +177,16 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                     }
 
                 })
-                .catch((error) => { console.log(error.details,error.code); return { error: "error here???" } })
+                    .catch((error) => { console.log(error.details, error.code); return { error: "error here???" } })
             }
         })
         .catch((error) => { return { data: 'error' } });
 })
 
 
-exports.cancelQueue = functions.https.onCall((data,context)=>{
-    db.ref('match_queue/'+context.auth.uid).remove().then((result)=>{return{status:'removed',result:result}}).catch((error)=>{
-        return {status:'error removing'}
+exports.cancelQueue = functions.https.onCall((data, context) => {
+    db.ref('match_queue/' + context.auth.uid).remove().then((result) => { return { status: 'removed', result: result } }).catch((error) => {
+        return { status: 'error removing' }
     })
 });
 
@@ -227,12 +254,12 @@ exports.clearMatchedQueue = functions.database.ref('matches/{id}').onCreate(asyn
         //add the match to each player's matches
         .then(
             () => {
-                return db.ref('clients/' + match['team_1'] + '/matches').push({match_id:snapShot.key,status:'queued'})
+                return db.ref('clients/' + match['team_1'] + '/matches').push({ match_id: snapShot.key, status: 'queued' })
             })
 
         .then(
             () => {
-                return db.ref('clients/' + match['team_2'] + '/matches').push({match_id:snapShot.key,status:'queued'})
+                return db.ref('clients/' + match['team_2'] + '/matches').push({ match_id: snapShot.key, status: 'queued' })
             })
         .then((rb) => { return snapShot.ref.set(snapShot.val()) })
         .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
@@ -337,27 +364,23 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
     const userUrl = "https://badmintonmatcher-4f217.firebaseio.com/clients/" + context.auth.uid + "/score.json";
 
 
-    axios.get(userUrl).then((result) => {
+    let new_queue = {};
+    console.log('data', data);
 
-        var new_queue = {
+    db.ref('clients/' + context.auth.uid).once('value').then((snapShot) => {
+
+        let currentUser = snapShot.val()
+        new_queue = {
             user_id: context.auth.uid,
             match_type: 0,
             range: 500,
-            mmr: result.data,
-            priority: 0,
+            mmr: currentUser.mmr,
+            user: { email: currentUser.email, display_name: currentUser.display_name, id: currentUser.user_id },
             time_stamp: new Date()
         }
-
-
         return axios.put(apiUrl, new_queue)
-    })
-    .then((result) => { return result.data })
-    
-
-    .catch((error) => { return { status: 'error' } });
-
-
-
+    }).then((result) => { return { result: new_queue } })
+        .catch((error) => { return { status: 'error' } });
 });
 
 
@@ -384,13 +407,7 @@ exports.updateUserProfile = functions.https.onCall((data, context) => {
 
 // load profile 
 
-app.get('/my_profile', (req, res) => {
 
-    //Check if token is present 
-    //check token is verified and valid using admin sdk 
-    //using admin-sdk retrieve user profile based on uid, and email
-    //return json of profile or error out 
-});
 
 
 

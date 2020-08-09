@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
 
-const reference = database().ref('/users/123');
+
 
 import {
     SafeAreaView,
@@ -165,7 +165,7 @@ export default function MatchSearchScreen(props) {
 
     const testCreateQueue = () => {
         let callable = functions().httpsCallable('addToMatchMakingQueue');
-        callable()
+        callable({user:'test'})
             .then((res) => {
                 console.log("queue created", res.data)
                 setSearching(true)

@@ -7,6 +7,7 @@
  */
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
+import functions from '@react-native-firebase/functions';
 
 import {
   SafeAreaView,
@@ -16,7 +17,7 @@ import {
   Text,
   StatusBar,
   Button,
-  Alert 
+  Alert
 } from 'react-native';
 
 import {
@@ -36,7 +37,7 @@ import AuthScreens from './Screens/AuthScreens';
 
 // const authSubscribe = auth().onAuthStateChanged(onAuthStateChanged);
 //import auth from '@react-native-firebase/auth';
-console.disableYellowBox = true; 
+console.disableYellowBox = true;
 export default function App() {
 
   const MainStack = createStackNavigator();
@@ -49,55 +50,79 @@ export default function App() {
 
 
 
-  const logout =() =>{
-    auth().signOut().then((result)=>{console.log('signed out'); setUser(null); setLoading(false);
-    setLoggedIn(false);}).catch((error)=>{console.log(error)})
-  //props.route.params
+  const logout = () => {
+    auth().signOut().then((result) => {
+      console.log('signed out'); setUser(null); setLoading(false);
+      setLoggedIn(false);
+    }).catch((error) => { console.log(error) })
+    //props.route.params
   }
-  const onSignUp = (email, password,displayName) => {
+  const onSignUp = (email, password, displayName) => {
 
-    auth().createUserWithEmailAndPassword(email, password).then((result) => {
-       if(result){
-        console.log('Sign up successful');
-        auth().currentUser.updateProfile({displayName:displayName}).then((result)=>{
+
+
+    let callable = functions().httpsCallable('signUp');
+    callable({ email: email, password: password, displayName: displayName, photoURL: 'https://static2.cbrimages.com/wordpress/wp-content/uploads/2019/07/The-Boys-Homelander.jpg' })
+      .then((result) => {
+        return auth().signInWithEmailAndPassword(email, password)
+      }).then((result) => {
+        console.log('Sign up successful', result);
+        setUser(result);
+        setLoading(false);
+        setLoggedIn(true);
+      }).catch((error) => {
+        Alert.alert('Sign up error', error.message);
+      });
+
+
+
+
+
+
+
+
+
+
+    /*auth().createUserWithEmailAndPassword(email, password).then((result) => {
+      if (result) {
+        console.log('Sign up successful', displayName);
+        auth().currentUser.updateProfile({ displayName: displayName }).then((result) => {
           setUser(result);
           setLoading(false);
           setLoggedIn(true);
 
-        }).catch((error)=>{
+        }).catch((error) => {
           Alert.alert('Sign up error', error.message);
         });
-       }
-     
-    }).catch((error) => {
-            Alert.alert('Sign up error', error.message);
-    });
+      }
 
-}
+    })*/
+
+  }
 
 
-const onSignIn = (email, password) => {
-  auth().signInWithEmailAndPassword(email, password).then((result) => {
-        if (result) {
-            setUser(result);
-            console.log('USER PROPERTIES',result);
-            setLoading(false);
-            setLoggedIn(true);
-            
-        }
+  const onSignIn = (email, password) => {
+    auth().signInWithEmailAndPassword(email, password).then((result) => {
+      if (result) {
+        setUser(result);
+        console.log('USER PROPERTIES', result);
+        setLoading(false);
+        setLoggedIn(true);
+
+      }
     }).catch((error) => {
 
-        console.log(error);
-        Alert.alert('Login error', error.message);
-        return error;
+      console.log(error);
+      Alert.alert('Login error', error.message);
+      return error;
     });
-}
-  
+  }
 
 
-// @refresh reset
+
+  // @refresh reset
   const setAuthToken = (token) => {
-    console.log('state changed right?',token)
+    console.log('state changed right?', token)
     if (token != null) {
       setUser(token);
       setLoading(false);
@@ -115,20 +140,20 @@ const onSignIn = (email, password) => {
 
   //@refresh reset
   //get authentication first, either from device or firebase
-  
+
 
   //if (!user) {
 
-    return (
-      <NavigationContainer>
-        <MainStack.Navigator>
-          {!user ? (
-            <MainStack.Screen 
-              name ="AuthStack"  
-              initialParams={{login:onSignIn,register:onSignUp} } component = {AuthScreens}/>) : ( <MainStack.Screen name ="DashBoard"  initialParams={{logout:logout} } component = {DashBoard}/>)}         
-        </MainStack.Navigator>
-      </NavigationContainer>
-    );
+  return (
+    <NavigationContainer>
+      <MainStack.Navigator>
+        {!user ? (
+          <MainStack.Screen
+            name="AuthStack"
+            initialParams={{ login: onSignIn, register: onSignUp }} component={AuthScreens} />) : (<MainStack.Screen name="DashBoard" initialParams={{ logout: logout }} component={DashBoard} />)}
+      </MainStack.Navigator>
+    </NavigationContainer>
+  );
 
 }
 

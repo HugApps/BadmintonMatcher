@@ -66,7 +66,7 @@ function DisplayBanner(props) {
     return (
         <View style={{ flex: 1, margin: 5, maxHeight: '50%', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Text style={{ color: 'white', fontSize: 25, margin: 10 }}>Personal Profile</Text>
-            <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={require("./assets/test_profile.jpg")}></Image>
+            <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={{uri:props.data.profilePicUrL}}></Image>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.display_name}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>MMR:{props.data.mmr}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.email}</Text>
@@ -189,12 +189,7 @@ export default function ProfileScreen(props) {
     const [user, setUser] = useState(auth().currentUser);
     const [displayName, setDisplayName] = useState(user.displayName);
     const [preview, setPreview] = useState(true);
-    const [profileData, setProfileData] = useState(null
-
-    );
-
-
-
+    const [profileData, setProfileData] = useState(null );
 
     const saveData = (data) => {
         console.log('data to be sent',data);
@@ -211,18 +206,19 @@ export default function ProfileScreen(props) {
             console.log('profile data loading result',snapShot.val())
             let userDetails = snapShot.val();
             let profileData = snapShot.val()['profile'];
-
+            console.log('userDetails',userDetails);
 
             let userProfile = {
+                profilePicUrL:userDetails.profilePicUrL,
                 display_name : userDetails.display_name,
                 mmr:userDetails.mmr,
                 test: 'test',
-                gender: profileData['gender'] ? profileData['gender'] : 1,
-                description: profileData['description'] ? profileData['description'] : ' ',
-                matchType: profileData['game_mode'] ? profileData['game_mode'] : 0,
-                yearsExp: profileData['years_of_exp'] ? profileData['years_of_exp'] : 10,
-                phoneNum: profileData['phoneNum'] ? profileData['phoneNum'] : 'N/A',
-                racket: profileData['racket'] ? profileData['racket'] : 'N/A',
+                gender: profileData  ? profileData['gender'] : 1,
+                description: profileData ? profileData['description'] : ' ',
+                matchType: profileData  ? profileData['game_mode'] : 0,
+                yearsExp: profileData ? profileData['years_of_exp'] : 10,
+                phoneNum: profileData ? profileData['phoneNum'] : 'N/A',
+                racket: profileData ? profileData['racket'] : 'N/A',
             }
             setProfileData(userProfile);
         })
