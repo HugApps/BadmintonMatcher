@@ -245,21 +245,28 @@ exports.getQueues = functions.https.onCall((data, context) => {
     // return axios.get(apiUrl).then((result)=>{return result.data}).catch((error)=>{return error})
 });
 
-exports.clearMatchedQueue = functions.database.ref('matches/{id}').onCreate(async (snapShot, context) => {
+exports.clearMatchedQueue = functions.database.ref('match_details/{id}').onCreate(async (snapShot, context) => {
     //Delete queue referenced in match object
     let match = snapShot.val();
-    return db.ref('match_queue/' + match['team_1']).remove()
+    return db.ref('match_queue/' + match['team_1'].id).remove()
         // remove the players from the queue
-        .then((ra) => { return db.ref('match_queue/' + match['team_2']).remove() })
+        .then((ra) => { return db.ref('match_queue/' + match['team_2'].id).remove() })
         //add the match to each player's matches
         .then(
             () => {
-                return db.ref('clients/' + match['team_1'] + '/matches').push({ match_id: snapShot.key, status: 'queued' })
+                return db.ref('clients/' + match['team_1'].id+ '/matches').push(
+                    { match_detail_id: snapShot.key, 
+                      status: 'queued',
+                      opponent:match['team_2']
+                     })
             })
 
         .then(
             () => {
-                return db.ref('clients/' + match['team_2'] + '/matches').push({ match_id: snapShot.key, status: 'queued' })
+                return db.ref('clients/' + match['team_2'].id + '/matches').push({
+                     match_id: snapShot.key, 
+                     opponent:match['team_1'],
+                     status: 'queued' })
             })
         .then((rb) => { return snapShot.ref.set(snapShot.val()) })
         .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
@@ -334,14 +341,14 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
                     updatedData['range'] = updatedData['range'] + 100;
                     return snapShot.ref.set(updatedData);
                 } else {
-                    return db.ref('matches').push({
+                    return db.ref('match_details').push({
                         sets: {},
                         status: 'queued',
                         venue_id: 1,
                         time: null,
                         date: null,
-                        team_1: updatedData['user_id'],
-                        team_2: bestMatch.id,
+                        team_1: updatedData['user'],
+                        team_2: bestMatch.val['user'],
                         team_1_mmr: updatedData["mmr"],
                         team_2_mmr: bestMatch.val["mmr"]
                     }).then((result) => {
@@ -372,10 +379,16 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
         let currentUser = snapShot.val()
         new_queue = {
             user_id: context.auth.uid,
+            created_at : new Date(),
             match_type: 0,
             range: 500,
             mmr: currentUser.mmr,
-            user: { email: currentUser.email, display_name: currentUser.display_name, id: currentUser.user_id },
+            user: { 
+                email: currentUser.email, 
+                mmr:currentUser.mmr,
+                display_name: currentUser.display_name, 
+                display_pic: currentUser.profilePicUrL,
+                id: currentUser.user_id },
             time_stamp: new Date()
         }
         return axios.put(apiUrl, new_queue)
@@ -405,59 +418,4 @@ exports.updateUserProfile = functions.https.onCall((data, context) => {
     }).catch((error) => { return error })
 });
 
-// load profile 
-
-
-
-
-
-
-
-
-
-//need a cloud function to create a buisnness logic rep of the client 
-
-
-
-//view_public_profile
-//update_profile
-//find_users_based_on_mmr 
-
-
-
-//Matches
-// scheudle a match  (create a match)
-//get_match_history
-//finish_match
-//abandon_match
-
-//Teams
-// make a team 
-// find_a_team
-// join_a_team
-// leave_team
-//
-
-//Venues
-//create_venue
-//view_venue
-
-
-
-
-//Addresses
-//create_address
-//read_address
-//delete_address
-
-
-//
-
-
-
-
-
-//future admin routes
-
-//Exposes custom routes  cloud function to firebase
 exports.client_api = functions.https.onRequest(app);

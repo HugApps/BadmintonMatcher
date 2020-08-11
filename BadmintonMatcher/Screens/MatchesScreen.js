@@ -33,6 +33,65 @@ import functions from '@react-native-firebase/functions';
 
 
 
+function MatchTabs(props) {
+
+    /*
+    accepted props
+    onSelect : callbackfunction passing back the index clicked,
+    labels: category labels in order to be displayed,
+    style: style for the tab container,
+    activeTint : color to use when tab is selected,
+    inActiveTint: normal color when not selected,
+    */
+    const [labels, setLabels] = useState(props.labels ? props.labels : [])
+    const [activeIndex, setActiveIndex] = useState(0)
+
+
+
+    //TODO need to handle default active and clicking interactions, turn off 
+    return (
+
+        <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', maxHeight: 50 }}>
+            {labels.map((label, index) => {
+                let isActive = false;
+                if (index == activeIndex) {
+                    isActive = true;
+                }
+                return (
+                    <TabItem
+                        active={isActive}
+                        activeTint={props.activeTint}
+                        inActiveTint={props.inActiveTint}
+                        label={label}
+                        onClick={()=>props.onSelect(index)}
+
+                    />
+                )
+            })}
+        </View>
+    )
+
+}
+
+
+function TabItem(props) {
+
+    const [active, setActive] = useState(props.active ? props.active : false);
+    const [label, setLabel] = useState(props.label)
+
+
+    return (
+        <TouchableOpacity onPress={()=>{props.onClick()}}>
+            <View style={{ borderBottomWidth: 3, borderBottomColor: active ? props.activeTint : props.inActiveTint, width: 100, height: 50, flex: 1, backgroundColor: "#EAEBEA", textAlign: 'center' }}>
+                <Text style={{ padding: 15, fontSize: 16, color: active ? props.activeTint : props.inActiveTint, textAlign: 'center' }}>{props.label}</Text>
+            </View>
+        </TouchableOpacity>
+
+    )
+}
+
+
+
 
 //<a href="https://www.vecteezy.com/free-vector/sport">Sport Vectors by Vecteezy</a>
 
@@ -41,38 +100,49 @@ export default function MatchesScreen(props) {
     const [matches, setMatches] = useState([]);
 
 
-    useEffect( async () => {
-        let match_a = await database().ref('/matches').orderByChild('team_1').equalTo(user.uid).once('value');
-    
-        let match_b = await database().ref('/matches').orderByChild('team_2').equalTo(user.uid).once('value');
-        let all_matches = [];
-        console.log(match_a.val());
-        Object.keys(match_a.val()).forEach((key)=>{
-           // console.log(match_a[key])
-            all_matches.push({id:key,...match_a.val()[key]})
+    useEffect(async () => {
+
+        let new_matches = await database().ref('/clients/' + user.uid + '/matches').once('value').then((snapShot) => {
+            console.log(snapShot.val())
+            return snapShot.val();
         })
 
-        Object.keys(match_b.val()).forEach((key)=>{
-            all_matches.push({id:key,...match_b.val()[key]})
-        })
 
-        console.log(all_matches);
-        setMatches(all_matches);
-     
-    
+
+        setMatches(Object.keys(new_matches).map((match_key) => {
+            return new_matches[match_key]
+
+        }));
+
+        console.log(matches);
+
+
     }, []);
 
 
 
-    const listItem = ({item,index})=>{
-        return(
+    const listItem = ({ item, index }) => {
+        if (item.opponent) {
 
-            <View style={{flexDirection:'row'}}>
-                <Text></Text>
-                <Text>{item.status}</Text>
-            </View>
+            return (
 
-        )
+                <View style={{ flex: 1, justifyContent: 'space-evenly', flexDirection: 'row' }}>
+                    <View>
+                        <Text>{item.opponent.display_name}</Text>
+                        <Text>{item.opponent.mmr}</Text>
+                    </View>
+                    <View>
+
+
+                    </View>
+
+                    <Text>{item.status}</Text>
+                </View>
+
+            )
+
+        }
+
 
 
     }
@@ -80,13 +150,21 @@ export default function MatchesScreen(props) {
 
     return (
         <View style={{ flex: 5, margin: 10, backgroundColor: 'white', alignItems: 'center', justifyContents: 'space-evenly' }}>
-            <Text>Matches screen</Text>
+            <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>My Matches</Text>
+
+            <MatchTabs
+                onSelect={(index) => { console.log('index selected', index) }}
+                activeTint={'#AF26D9'}
+                inActiveTint={'black'}
+                labels={["New!", "Active", "History"]}
+            />
+
             <FlatList
-                numColumns={2}
+                numColumns={1}
                 data={matches}
                 renderItem={listItem}
             />
-          
+
 
 
 
