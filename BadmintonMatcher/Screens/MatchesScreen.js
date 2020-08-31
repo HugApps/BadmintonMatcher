@@ -13,7 +13,7 @@ import {
     StatusBar,
     Image,
     TextInput,
-    TouchableOpacity, ActivityIndicator, FlatList,
+    TouchableOpacity, ActivityIndicator, FlatList,Button
 } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -29,10 +29,6 @@ import functions from '@react-native-firebase/functions';
 
 
 /// @refresh reset 
-
-
-
-
 function MatchTabs(props) {
 
     /*
@@ -51,7 +47,7 @@ function MatchTabs(props) {
     //TODO need to handle default active and clicking interactions, turn off 
     return (
 
-        <View style={{ flex: 5, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', maxHeight: 50 }}>
+        <View style={{ flex: 5, margin: 10, flexDirection: 'row', alignItems: 'flex-start', maxHeight: 50 }}>
             {labels.map((label, index) => {
                 let isActive = false;
                 if (index == activeIndex) {
@@ -63,7 +59,7 @@ function MatchTabs(props) {
                         activeTint={props.activeTint}
                         inActiveTint={props.inActiveTint}
                         label={label}
-                        onClick={()=>props.onSelect(index)}
+                        onClick={() => { props.onSelect(index); setActiveIndex(index) }}
 
                     />
                 )
@@ -80,9 +76,15 @@ function TabItem(props) {
     const [label, setLabel] = useState(props.label)
 
 
+
+    useEffect(() => {
+        setActive(props.active);
+
+    }, [props.active]);
+
     return (
-        <TouchableOpacity onPress={()=>{props.onClick()}}>
-            <View style={{ borderBottomWidth: 3, borderBottomColor: active ? props.activeTint : props.inActiveTint, width: 100, height: 50, flex: 1, backgroundColor: "#EAEBEA", textAlign: 'center' }}>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => { props.onClick() }}>
+            <View style={{ flex: 1, borderBottomWidth: 3, borderBottomColor: active ? props.activeTint : props.inActiveTint, height: 50, backgroundColor: "#EAEBEA", textAlign: 'center' }}>
                 <Text style={{ padding: 15, fontSize: 16, color: active ? props.activeTint : props.inActiveTint, textAlign: 'center' }}>{props.label}</Text>
             </View>
         </TouchableOpacity>
@@ -90,73 +92,70 @@ function TabItem(props) {
     )
 }
 
-
-
-
 //<a href="https://www.vecteezy.com/free-vector/sport">Sport Vectors by Vecteezy</a>
 
 export default function MatchesScreen(props) {
     const [user, setUser] = useState(auth().currentUser);
     const [matches, setMatches] = useState([]);
+    const [match_status, setSearchMatchStatus] = useState('queued');
+    const [match_status_options, setOptions] = useState(['queued', 'pending', 'scheduled', 'complete'])
 
 
-    useEffect(async () => {
-
-        let new_matches = await database().ref('/clients/' + user.uid + '/matches').once('value').then((snapShot) => {
-            console.log(snapShot.val())
-            return snapShot.val();
-        })
-
-
-
-        setMatches(Object.keys(new_matches).map((match_key) => {
-            return new_matches[match_key]
-
-        }));
-
-        console.log(matches);
-
-
-    }, []);
-
-
-
-    const listItem = ({ item, index }) => {
-        if (item.opponent) {
-
-            return (
-
-                <View style={{ flex: 1, justifyContent: 'space-evenly', flexDirection: 'row' }}>
-                    <View>
-                        <Text>{item.opponent.display_name}</Text>
-                        <Text>{item.opponent.mmr}</Text>
-                    </View>
-                    <View>
-
-
-                    </View>
-
-                    <Text>{item.status}</Text>
-                </View>
-
-            )
-
-        }
-
-
-
+    const rejectMatch = (match_id)=>{
+        console.log('will remove match',match_id);
     }
 
 
+    const confirmMatch = (match_id)=>{
+        console.log('will remove match',match_id);
+    }
+
+    useEffect(() => {
+
+        database().ref('/clients/' + user.uid + '/matches').orderByChild('status').equalTo(match_status).once('value').then((snapShot) => {
+            if (snapShot.val()) {
+                let new_matches = snapShot.val();
+                setMatches(Object.keys(new_matches).map((match_key) => {
+                    return new_matches[match_key]
+
+                }));
+
+                console.log(matches);
+
+            } else {
+                setMatches([]);
+            }
+
+        })
+    }, [match_status]);
+
+    let listItem = ({ item, index }) => {
+        if (item.opponent) 
+            return (
+
+                <View style={{ flex: 1, backgroundColor:'#f6f6f6',margin:10,alignItems:'center',justifyContent: 'space-evenly', flexDirection: 'row' }}>
+                    <View style={{ flex: 1,margin:10 }}>
+                        <Text style={{fontSize:18,padding:5}}>{item.opponent.display_name}</Text>
+                        <Text style={{padding:5}}>MMR: {item.opponent.mmr}</Text>
+                    </View>
+                    <View style={{flex:1,margin:10}}>
+                        <Button onPress={()=>{confirmMatch(item.match_id)}} style={{padding:5}}title={"Accept"}/>
+                        <Button onPress={()=>{rejectMatch(item.match_id)}} style={{padding:5}} title={'Reject'}/>
+                    </View>
+                </View>
+            )
+        }
+    }
+
     return (
-        <View style={{ flex: 5, margin: 10, backgroundColor: 'white', alignItems: 'center', justifyContents: 'space-evenly' }}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>My Matches</Text>
+        <View style={{ flex: 1, backgroundColor: 'white', justifyContents: 'space-evenly' }}>
+            <Text style={{ margin: 10, fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>My Matches</Text>
 
             <MatchTabs
-                onSelect={(index) => { console.log('index selected', index) }}
+                onSelect={(index) => { console.log('index selected', index); setSearchMatchStatus(match_status_options[index]) }}
                 activeTint={'#AF26D9'}
                 inActiveTint={'black'}
-                labels={["New!", "Active", "History"]}
+                labels={["New!", "Pending", "Active", "History"]}
             />
 
             <FlatList
@@ -164,9 +163,6 @@ export default function MatchesScreen(props) {
                 data={matches}
                 renderItem={listItem}
             />
-
-
-
 
         </View>
     )
