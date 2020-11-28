@@ -1,33 +1,27 @@
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
+import functions from '@react-native-firebase/functions';
 
 const reference = database().ref('/users/123');
 
 import {
-    SafeAreaView,
-    StyleSheet,
-    ScrollView,
     View,
     Text,
-    StatusBar,
-    Image,
-    TextInput,
-    TouchableOpacity, ActivityIndicator, FlatList,Button
+    TouchableOpacity,  FlatList,Button
 } from 'react-native';
 
-import { NavigationContainer } from '@react-navigation/native';
-import { createDrawerNavigator } from '@react-navigation/drawer';
-import {
-    DrawerContentScrollView,
-    DrawerItemList,
-    DrawerItem,
-} from '@react-navigation/drawer';
 import auth from '@react-native-firebase/auth';
-import functions from '@react-native-firebase/functions';
 
 
 
+
+function MatchFound(props) {
+    return (<TouchableOpacity style={{ flex: 1, maxWidth: '70%', maxHeight: 250, borderRadius: 10, backgroundColor: 'green', padding: 30 }} onPress={() => { props.onPress() }}>
+        <Text style={{ color: 'white', textAlign: 'center' }}>VIEW MATCH</Text>
+    </TouchableOpacity>)
+
+}
 /// @refresh reset 
 function MatchTabs(props) {
 
@@ -106,8 +100,9 @@ export default function MatchesScreen(props) {
     }
 
 
-    const confirmMatch = (match_id)=>{
-        console.log('will remove match',match_id);
+    //moves match status from queued to pending
+    const confirmMatch = async (match)=>{
+        let call_result = await functions().httpsCallable('updateMatchStatus')({match:match})
     }
 
     useEffect(() => {
@@ -116,7 +111,7 @@ export default function MatchesScreen(props) {
             if (snapShot.val()) {
                 let new_matches = snapShot.val();
                 setMatches(Object.keys(new_matches).map((match_key) => {
-                    return new_matches[match_key]
+                    return {id:match_key,...new_matches[match_key]}
 
                 }));
 
@@ -130,7 +125,7 @@ export default function MatchesScreen(props) {
     }, [match_status]);
 
     let listItem = ({ item, index }) => {
-        if (item.opponent) 
+        if (item.opponent) {
             return (
 
                 <View style={{ flex: 1, backgroundColor:'#f6f6f6',margin:10,alignItems:'center',justifyContent: 'space-evenly', flexDirection: 'row' }}>
@@ -139,8 +134,8 @@ export default function MatchesScreen(props) {
                         <Text style={{padding:5}}>MMR: {item.opponent.mmr}</Text>
                     </View>
                     <View style={{flex:1,margin:10}}>
-                        <Button onPress={()=>{confirmMatch(item.match_id)}} style={{padding:5}}title={"Accept"}/>
-                        <Button onPress={()=>{rejectMatch(item.match_id)}} style={{padding:5}} title={'Reject'}/>
+                        <Button onPress={()=>{confirmMatch(item)}} style={{padding:5}}title={"Accept"}/>
+                        <Button onPress={()=>{rejectMatch(item.match_detail_id)}} style={{padding:5}} title={'Reject'}/>
                     </View>
                 </View>
             )

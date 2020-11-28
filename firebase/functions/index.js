@@ -29,7 +29,7 @@ const db = admin.database();
 
 
 exports.signUp = functions.https.onCall((data, context) => {
-    
+
     let user_details = {
         email: data.email,
         emailVerified: true,
@@ -43,14 +43,13 @@ exports.signUp = functions.https.onCall((data, context) => {
 
     return admin.auth().createUser(user_details).then((result) => {
         if (result) {
-            console.log('sign up result',result);
-            return { data: 'success',result:result }
+            return { data: 'success', result: result }
         }
     })
-    .catch((error) => {
+        .catch((error) => {
             console.log('sign up error');
             return { data: "registration error" }
-    })
+        })
 
 });
 
@@ -245,34 +244,39 @@ exports.getQueues = functions.https.onCall((data, context) => {
     // return axios.get(apiUrl).then((result)=>{return result.data}).catch((error)=>{return error})
 });
 
-exports.clearMatchedQueue = functions.database.ref('match_details/{id}').onCreate(async (snapShot, context) => {
-    //Delete queue referenced in match object
-    let match = snapShot.val();
-    return db.ref('match_queue/' + match['team_1'].id).remove()
-        // remove the players from the queue
-        .then((ra) => { return db.ref('match_queue/' + match['team_2'].id).remove() })
-        //add the match to each player's matches
-        .then(
-            () => {
-                return db.ref('clients/' + match['team_1'].id+ '/matches').push(
-                    { match_detail_id: snapShot.key, 
-                      status: 'queued',
-                      opponent:match['team_2']
-                     })
-            })
+exports.clearMatchedQueue = functions.database.ref('match_details/{id}')
+    .onCreate(async (snapShot, context) => {
+        //Delete queue referenced in match object
+        let match = snapShot.val();
+        return db.ref('match_queue/' + match['team_1'].id).remove()
+            // remove the players from the queue
+            .then((ra) => { return db.ref('match_queue/' + match['team_2'].id).remove() })
+            //add the match to each player's matches
+            .then(
+                () => {
+                    return db.ref('clients/' + match['team_1'].id + '/matches').push(
+                        {
+                            match_detail_id: snapShot.key,
+                            status: 'queued',
+                            opponent: match['team_2']
+                        })
+                })
 
-        .then(
-            () => {
-                return db.ref('clients/' + match['team_2'].id + '/matches').push({
-                     match_id: snapShot.key, 
-                     opponent:match['team_1'],
-                     status: 'queued' })
-            })
-        .then((rb) => { return snapShot.ref.set(snapShot.val()) })
-        .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
+            .then(
+                () => {
+                    return db.ref('clients/' + match['team_2'].id + '/matches').push({
+                        match_id: snapShot.key,
+                        opponent: match['team_1'],
+                        status: 'queued'
+                    })
+                })
+            .then((rb) => { return snapShot.ref.set(snapShot.val()) })
+            .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
 
-        )
-})
+            )
+    })
+
+
 
 // INSTead of updating range on initial QUEUE entry, do it during poll check, use players search range as default
 //Poll every 1 to 5 mins to create a match, if no match increase the search range ( player search range + some factor)
@@ -341,6 +345,7 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
                     updatedData['range'] = updatedData['range'] + 100;
                     return snapShot.ref.set(updatedData);
                 } else {
+
                     return db.ref('match_details').push({
                         sets: {},
                         status: 'queued',
@@ -362,6 +367,11 @@ exports.createMatches = functions.database.ref('/match_queue/{id}')
     })
 
 
+exports.confirmMatch = functions.https.onCall((data, context) => {
+
+
+
+});
 
 
 
@@ -379,16 +389,17 @@ exports.addToMatchMakingQueue = functions.https.onCall((data, context) => {
         let currentUser = snapShot.val()
         new_queue = {
             user_id: context.auth.uid,
-            created_at : new Date(),
+            created_at: new Date(),
             match_type: 0,
             range: 500,
             mmr: currentUser.mmr,
-            user: { 
-                email: currentUser.email, 
-                mmr:currentUser.mmr,
-                display_name: currentUser.display_name, 
+            user: {
+                email: currentUser.email,
+                mmr: currentUser.mmr,
+                display_name: currentUser.display_name,
                 display_pic: currentUser.profilePicUrL,
-                id: currentUser.user_id },
+                id: currentUser.user_id
+            },
             time_stamp: new Date()
         }
         return axios.put(apiUrl, new_queue)
@@ -417,5 +428,50 @@ exports.updateUserProfile = functions.https.onCall((data, context) => {
         return result.data;
     }).catch((error) => { return error })
 });
+
+
+exports.updateMatchStatus = functions.https.onCall((data, context) => {
+    let match = data.match
+    let valid_statusues = ['queued', 'pending', 'scheduled', 'complete']
+
+    //* have to update both player's matches??? and match details
+    console.log('def path', 'clients/' + match.match_detail_id + '/matches/' + match.id + '/status/');
+    db.ref('match_details/'+ match.match_detail_id+'/status/').set(valid_statusues[1]).then((result)=>{
+        if (result) {
+            console.log('success', result);
+            return { success: true }
+
+        } else {
+            console.log('fail', result);
+            return { success: false }
+        }
+    })
+
+   /* db.ref('clients/' + context.auth.uid + '/matches/' + match.id + '/status/').set(valid_statusues[1]).then((result) => {
+        
+
+
+    })
+    *.
+
+    //{"match_detail_id": "-MEKdPChrx6ChK8q6AeH", "opponent": {"display_name": "Homelander2", "email": "homelander2@test.com", "id": "Y08y1hr4xdVZmlcD85OvjumT4vv1", "mmr": 2000}, "status":
+
+
+
+    /*
+    queud to pending, when user accepts a new match
+    pending to scheudled, when both players agree to match details
+    schedule to complete , maych is played and both players agree to score 
+    */
+
+
+
+
+
+
+   
+})
+
+
 
 exports.client_api = functions.https.onRequest(app);
