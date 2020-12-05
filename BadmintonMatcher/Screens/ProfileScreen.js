@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
 import CheckBox from '@react-native-community/checkbox';
-
+import Icon from "react-native-vector-icons/MaterialIcons";
 import {
     ScrollView,
     View,
@@ -28,9 +28,9 @@ function InputRow(props) {
 
             <View style={{ flex: 1, margin: 10 }}>
                 <View style={{ flex: 1, flexDirection: 'row', padding: 20, justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={{ fontSize: 15, color: 'black' }}>{props.label}</Text>
-                    <TouchableOpacity onPress={() => { setEditable(false) }} >
-                        <Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />
+                    <Text style={{ fontSize: 15, color: 'white' }}>{props.label}</Text>
+                    <TouchableOpacity onPress={() => { setEditable(false); props.onConfirm()}} >
+                        <Icon style={{ marginBottom: 5 }} color='white' name={"done"} size={20} />
                     </TouchableOpacity>
 
                 </View>
@@ -55,7 +55,7 @@ function InputRow(props) {
 
                 </View>
                 <View style={{ flex: 1, marginLeft: 20 }}>
-                    <Text style={{ fontSize: 12, color: 'white' }}>{props.value.toString()}</Text>
+                    <Text style={{ fontSize: 12, color: 'white' }}>{props.value}</Text>
                 </View>
 
             </View>
@@ -74,8 +74,8 @@ function TextBox(props) {
             <View style={{ flex: 1, flexDirection: 'column', padding: 20, }}>
                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontSize: 12, color: 'white' }}>{props.label}</Text>
-                    <TouchableOpacity onPress={() => { setEditMode(false) }} >
-                        <Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />
+                    <TouchableOpacity onPress={() => { setEditMode(false); props.onConfirm() }} >
+                        <Icon color='white' name={"done"} size={20} />
                     </TouchableOpacity>
 
                 </View>
@@ -98,7 +98,7 @@ function TextBox(props) {
         return (
             <View style={{ flex: 1, margin: 10, flexDirection: 'column', padding: 20, }}>
                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-                    <Text style={{ fontSize: 12, color: 'white' }}>{props.label}</Text>
+                    <Text style={{ fontSize: 12, color: 'black' }}>{props.label}</Text>
                     <TouchableOpacity onPress={() => { setEditMode(true) }} >
                         <Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />
 
@@ -180,6 +180,14 @@ function Info(props) {
         };
     }
 
+    const saveData = (key,data) => {
+        console.log('data to be sent', key,data);
+        database().ref('/clients/' + props.user.uid + '/profile/'+key +'/').set(data).then((result) => {
+            console.log('saving results', result);
+        })
+        
+    }
+
     return (
 
         <View style={{ flex: 4, margin: 10, padding: 10, justifyConent: 'flex-start', backgroundColor: '#5A8DD8', width: '100%' }} >
@@ -187,50 +195,41 @@ function Info(props) {
                 <TextBox
                     value={description}
                     mode={edit}
-                    onEdit={(text) => { setDescription(text) }}
+                    onEdit={(text) => { setDescription(text);}}
+                    onConfirm= {() => { saveData('description',description)}}
                     label='About You:' />
                 <InputRow
                     value={phoneNum}
                     label='Email:'
-                    onEdit={(text) => { setPhoneNum(text) }}
+                    onEdit={(text) => { setPhoneNum(text); }}
+                    onConfirm= {() => { saveData('phoneNum',phoneNum)}}
                     mode={edit} />
                 <InputRow
                     value={yearsExp}
                     label='Years of Experience:'
-                    onEdit={(text) => { setYearsExP(text) }}
+                    onEdit={(text) => { setYearsExP(text)}}
+                    onConfirm= {() => { saveData('years_of_exp',yearsExp)}}
                     mode={edit} />
                 <InputRow
                     value={racket}
                     label='Favorite/Current Badminton Racket:'
-                    onEdit={(text) => { setRacket(text) }}
+                    onEdit={(text) => { setRacket(text)}}
+                    onConfirm= {() => { saveData('racket',racket)}}
                     mode={edit} />
                 <MultiSelectBox
                     mainLabel={'Gender'}
                     labels={['M', 'F', 'N/A']}
                     value={gender}
-                    onChange={(index) => { setGender(index); console.log('INDEX TOGGLED', index) }}
+                    onConfirm={()=>{saveData('gender',gender)}}
+                    onChange={(index) => { setGender(index)}}
                 />
                 <MultiSelectBox
                     mainLabel={'Prefered game mode:'}
                     labels={['Single', 'Doubles', 'Mixed']}
-                    value={gender}
-                    onChange={(index) => { setMatchType(index); console.log('INDEX TOGGLED', index) }}
+                    value={matchType}
+                    onConfirm={()=>{saveData('game_mode',matchType)}}
+                    onChange={(index) => { setMatchType(index);}}
                 />
-
-                {edit == 'preview' ? (<TouchableOpacity onPress={() => { setEdit('edit') }} style={{ flex: 0.5, height: 50, justifyContent: 'center', backgroundColor: '#304BCF', alignItems: 'center', borderWidth: 0.5, borderRadius: 5, borderColor: '#5A8DD8' }}>
-                    <Text>Edit</Text>
-                </TouchableOpacity>) :
-                    <View>
-
-                        <TouchableOpacity onPress={() => { props.onSubmit(buildSubmitData()) }} style={{ flex: 0.5, height: 50, justifyContent: 'center', backgroundColor: '#304BCF', alignItems: 'center', borderWidth: 0.5, borderRadius: 5, borderColor: '#5A8DD8' }}>
-                            <Text>Save</Text>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity onPress={() => { setEdit('preview') }} style={{ flex: 0.5, height: 50, justifyContent: 'center', backgroundColor: '#304BCF', alignItems: 'center', borderWidth: 0.5, borderRadius: 5, borderColor: '#5A8DD8' }}>
-                            <Text>Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                }
             </View>
         </View>
     )
@@ -249,10 +248,10 @@ function MultiSelectBox(props) {
 
     const options = responseLabels.map((l, index) => {
         return (
-            <View style={{flex:1,margin:20,justifyContent:'center',alignContent:'center'}} >
-                <Text style={{margin:5,flex:1,fontSize:16,color:'white',}}>{l}</Text>
+            <View style={{ flex: 1, alignItems:'center', justifyContent: 'center', alignContent: 'center' }} >
+                <Text style={{ margin:10,textAlign:'center', flex: 1, fontSize: 14,color: 'white', }}>{l}</Text>
                 <CheckBox
-                    style={{flex:1,width:20,height:20}}
+                    style={{  width: 20, height: 20 }}
                     boxType={'square'}
                     onCheckColor={'white'}
                     onTintColor={'white'}
@@ -270,16 +269,19 @@ function MultiSelectBox(props) {
 
 
 
+    const iconButton = editable ? (<Icon color='white' name={"done"} size={20}/>) : (<Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />)
+    const labelColor = editable ? 'white' :'black';
+
     return (
         <View style={{ flex: 1, margin: 20, flexDirection: 'column' }}>
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ color: 'black' }}>{mainLabel}:</Text>
+                <Text style={{ color: labelColor }}>{mainLabel}:</Text>
                 <TouchableOpacity onPress={() => { setEditMode(!editable) }} >
-                    <Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />
+                    {iconButton}
                 </TouchableOpacity>
             </View>
 
-            <View style={{ flex: 1, marginTop:10,marginLeft:-10, flexDirection: 'row', justifyContent: 'space-around' }}>
+            <View style={{ flex: 1, marginTop: 10, marginLeft:-40, flexDirection: 'row', justifyContent: 'flex-start' }}>
                 {options}
             </View>
         </View >
@@ -357,7 +359,7 @@ export default function ProfileScreen(props) {
             <ScrollView>
 
                 <DisplayBanner data={profileData} />
-                <Info profileData={profileData} onSubmit={(data) => { saveData(data) }} />
+                <Info profileData={profileData} user={user} onSubmit={(data) => { saveData(data) }} />
             </ScrollView>
         </View >
     )
