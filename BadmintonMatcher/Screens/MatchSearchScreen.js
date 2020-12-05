@@ -25,6 +25,7 @@ import {
 } from '@react-navigation/drawer';
 import auth from '@react-native-firebase/auth';
 import functions from '@react-native-firebase/functions';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 
 

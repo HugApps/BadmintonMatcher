@@ -210,7 +210,7 @@ function Info(props) {
                     value={gender}
                     onChange={(index) => { setGender(index); console.log('INDEX TOGGLED', index) }}
                 />
-                   <MultiSelectBox
+                <MultiSelectBox
                     mainLabel={'Prefered game mode:'}
                     labels={['Single', 'Doubles', 'Mixed']}
                     value={gender}
