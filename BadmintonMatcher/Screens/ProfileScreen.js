@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
 import CheckBox from '@react-native-community/checkbox';
 import Icon from "react-native-vector-icons/MaterialIcons";
+import ImagePicker from "react-native-image-picker";
 import {
     ScrollView,
     View,
@@ -29,7 +30,7 @@ function InputRow(props) {
             <View style={{ flex: 1, margin: 10 }}>
                 <View style={{ flex: 1, flexDirection: 'row', padding: 20, justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={{ fontSize: 15, color: 'white' }}>{props.label}</Text>
-                    <TouchableOpacity onPress={() => { setEditable(false); props.onConfirm()}} >
+                    <TouchableOpacity onPress={() => { setEditable(false); props.onConfirm() }} >
                         <Icon style={{ marginBottom: 5 }} color='white' name={"done"} size={20} />
                     </TouchableOpacity>
 
@@ -101,7 +102,6 @@ function TextBox(props) {
                     <Text style={{ fontSize: 12, color: 'black' }}>{props.label}</Text>
                     <TouchableOpacity onPress={() => { setEditMode(true) }} >
                         <Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />
-
                     </TouchableOpacity>
 
                 </View>
@@ -129,14 +129,44 @@ function TextBox(props) {
 
 function DisplayBanner(props) {
     const [user, setUser] = useState(auth().currentUser);
+    const[profileUri,setUri] = useState(props.data.profilePicUrL)
     return (
         <View style={{ flex: 1, margin: 5, maxHeight: '50%', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Text style={{ color: 'white', fontSize: 25, margin: 10 }}>Personal Profile</Text>
-            <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={{ uri: props.data.profilePicUrL }}></Image>
+
+            <TouchableOpacity
+                style={{flex:1}}
+                onPress={() => {
+                    ImagePicker.launchImageLibrary({
+                        mediaType: 'photo',
+                        includeBase64: false,
+                        maxHeight: 200,
+                        maxWidth: 200,
+
+
+                    },(response)=>{
+                        console.log('test image picker response',response);
+                        setUri(response.uri)
+
+                        auth().currentUser.updateProfile({photoURL:profileUri});
+                    })
+                }
+                }
+            >
+                <View style={{ flex: 1, flexDirection: 'row' }}>
+                    <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={{ uri: profileUri }}></Image>
+                    <Icon style={{ marginBottom: 5 }} color='black' name={"image"} size={30} />
+
+                </View>
+
+
+            </TouchableOpacity>
+
+
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.display_name}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>MMR:{props.data.mmr}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.email}</Text>
-        </View>
+        </View >
     )
 }
 
@@ -180,12 +210,12 @@ function Info(props) {
         };
     }
 
-    const saveData = (key,data) => {
-        console.log('data to be sent', key,data);
-        database().ref('/clients/' + props.user.uid + '/profile/'+key +'/').set(data).then((result) => {
+    const saveData = (key, data) => {
+        console.log('data to be sent', key, data);
+        database().ref('/clients/' + props.user.uid + '/profile/' + key + '/').set(data).then((result) => {
             console.log('saving results', result);
         })
-        
+
     }
 
     return (
@@ -195,40 +225,40 @@ function Info(props) {
                 <TextBox
                     value={description}
                     mode={edit}
-                    onEdit={(text) => { setDescription(text);}}
-                    onConfirm= {() => { saveData('description',description)}}
+                    onEdit={(text) => { setDescription(text); }}
+                    onConfirm={() => { saveData('description', description) }}
                     label='About You:' />
                 <InputRow
                     value={phoneNum}
                     label='Email:'
                     onEdit={(text) => { setPhoneNum(text); }}
-                    onConfirm= {() => { saveData('phoneNum',phoneNum)}}
+                    onConfirm={() => { saveData('phoneNum', phoneNum) }}
                     mode={edit} />
                 <InputRow
                     value={yearsExp}
                     label='Years of Experience:'
-                    onEdit={(text) => { setYearsExP(text)}}
-                    onConfirm= {() => { saveData('years_of_exp',yearsExp)}}
+                    onEdit={(text) => { setYearsExP(text) }}
+                    onConfirm={() => { saveData('years_of_exp', yearsExp) }}
                     mode={edit} />
                 <InputRow
                     value={racket}
                     label='Favorite/Current Badminton Racket:'
-                    onEdit={(text) => { setRacket(text)}}
-                    onConfirm= {() => { saveData('racket',racket)}}
+                    onEdit={(text) => { setRacket(text) }}
+                    onConfirm={() => { saveData('racket', racket) }}
                     mode={edit} />
                 <MultiSelectBox
                     mainLabel={'Gender'}
                     labels={['M', 'F', 'N/A']}
                     value={gender}
-                    onConfirm={()=>{saveData('gender',gender)}}
-                    onChange={(index) => { setGender(index)}}
+                    onConfirm={() => { saveData('gender', gender) }}
+                    onChange={(index) => { setGender(index) }}
                 />
                 <MultiSelectBox
                     mainLabel={'Prefered game mode:'}
                     labels={['Single', 'Doubles', 'Mixed']}
                     value={matchType}
-                    onConfirm={()=>{saveData('game_mode',matchType)}}
-                    onChange={(index) => { setMatchType(index);}}
+                    onConfirm={() => { saveData('game_mode', matchType) }}
+                    onChange={(index) => { setMatchType(index); }}
                 />
             </View>
         </View>
@@ -248,10 +278,10 @@ function MultiSelectBox(props) {
 
     const options = responseLabels.map((l, index) => {
         return (
-            <View style={{ flex: 1, alignItems:'center', justifyContent: 'center', alignContent: 'center' }} >
-                <Text style={{ margin:10,textAlign:'center', flex: 1, fontSize: 14,color: 'white', }}>{l}</Text>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', alignContent: 'center' }} >
+                <Text style={{ margin: 10, textAlign: 'center', flex: 1, fontSize: 14, color: 'white', }}>{l}</Text>
                 <CheckBox
-                    style={{  width: 20, height: 20 }}
+                    style={{ width: 20, height: 20 }}
                     boxType={'square'}
                     onCheckColor={'white'}
                     onTintColor={'white'}
@@ -269,8 +299,8 @@ function MultiSelectBox(props) {
 
 
 
-    const iconButton = editable ? (<Icon color='white' name={"done"} size={20}/>) : (<Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />)
-    const labelColor = editable ? 'white' :'black';
+    const iconButton = editable ? (<Icon color='white' name={"done"} size={20} />) : (<Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />)
+    const labelColor = editable ? 'white' : 'black';
 
     return (
         <View style={{ flex: 1, margin: 20, flexDirection: 'column' }}>
@@ -281,7 +311,7 @@ function MultiSelectBox(props) {
                 </TouchableOpacity>
             </View>
 
-            <View style={{ flex: 1, marginTop: 10, marginLeft:-40, flexDirection: 'row', justifyContent: 'flex-start' }}>
+            <View style={{ flex: 1, marginTop: 10, marginLeft: -40, flexDirection: 'row', justifyContent: 'flex-start' }}>
                 {options}
             </View>
         </View >
