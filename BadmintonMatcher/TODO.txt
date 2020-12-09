@@ -1,0 +1,5 @@
+DEC 9 2020
+
+- fix profile picture, check box saving on profile screen
+- backend : only allow matching with same opponent one at a time
+- improve UI of match making screen

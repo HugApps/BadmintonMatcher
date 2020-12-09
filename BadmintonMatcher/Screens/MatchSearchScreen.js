@@ -77,21 +77,44 @@ function MatchInfo(props) {
 
 function MatchSummary(props) {
     if (props.match == null || props.match == '') { return null; }
+    let matchData = Object.keys(props.match).map((v,index)=>{
+        return {id:v,...props.match[v]}
+    })
+    const[opponent,setOpponent] =useState(props.match.opponent);
+    const[myData,setMyData] = useState({});
+    //temporary way of getting your own data!, neeed redux to share profile data globally
+    useEffect(()=>{
+        const user = auth().currentUser
+        database().ref('/clients/' + user.uid).once('value').then(snapShot => {
+            const userDetails = snapShot.val();
+            const userProfile = {
+                display_pic: userDetails.profilePicUrL,
+                display_name: userDetails.display_name,
+                mmr: userDetails.mmr,
+            }
+            setMyData(userProfile);
+        })
+
+
+
+    },[ ])
+
+    //Need easy way to fetch personal account data to display here
     return (
         <View style={{ flex: 3, backgroundColor: 'orange', margin: 20, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
             <View style={{ flex: 3, alignItems: 'center', justifyContent: 'space-between', margin: 10 }}>
-                <Text style={{ margin: 10, fontSize: 20 }}>Team 1</Text>
-                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={require("./assets/test_profile.jpg")}></Image>
-                <Text style={{ margin: 10, fontSize: 20 }}>MMR:{props.match.team_1_mmr}</Text>
+                <Text style={{ margin: 10, fontSize: 20 }}>{opponent.display_name}</Text>
+                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={{ uri: opponent.display_pic }}></Image>
+                <Text style={{ margin: 10, fontSize: 20 }}>MMR:{opponent.mmr}</Text>
             </View>
             <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 30, textAlign: 'center', color: 'red' }}>VS</Text>
             </View>
-
+            
             <View style={{ flex: 3, alignItems: 'center', justifyContent: 'space-between', margin: 10 }}>
-                <Text style={{ margin: 10, fontSize: 20 }}>Team 2 </Text>
-                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={require("./assets/test_profile.jpg")}></Image>
-                <Text style={{ margin: 10, fontSize: 20 }}>MMR:{props.match.team_2_mmr}</Text>
+                <Text style={{ margin: 10, fontSize: 20 }}>{myData.display_name} </Text>
+                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={{ uri:myData.display_pic }}></Image>
+                <Text style={{ margin: 10, fontSize: 20 }}>MMR:{myData.mmr}</Text>
             </View>
         </View>
     )
@@ -150,25 +173,15 @@ export default function MatchSearchScreen(props) {
     const checkMatches = (callback) => {
         database().ref('/clients/' + user.uid + '/matches').limitToLast(1).on('child_added', (snapShot) => {
             let newMatch = snapShot.val();
-            console.log('error here ', newMatch);
-
-            return database().ref('/matches/').once('value').then((match_details) => {
-                console.log('match found', match_details.val())
-                callback(match_details.val());
-                return;
-            })
-                .catch((error) => { console.log('match found error', error) });
-
+            console.log('DEBUG NEW MATCH RESULTS',newMatch);
+            callback(newMatch);
         })
-
-
     }
 
     const testCreateQueue = () => {
         let callable = functions().httpsCallable('addToMatchMakingQueue');
         callable({user:'test'})
             .then((res) => {
-                console.log("queue created", res.data)
                 setSearching(true)
             })
             .catch((error) => { console.log('queue failed', error) })
@@ -179,13 +192,9 @@ export default function MatchSearchScreen(props) {
 
     useEffect(() => {
         let interval = null;
-        console.log('checking matches', onLoad);
-
-
         getSearchStatus().then((res) => {
             if (res) {
                 if (res.data.data == user.uid) {
-                    console.log('searchStatus', res.data.data);
                     setQueue(res.data.data);
                     setSearching(true);
                 }
@@ -198,9 +207,7 @@ export default function MatchSearchScreen(props) {
 
 
         checkMatches((result) => {
-
                 // have to get a way to hide old matches from reappearing
-                console.log('2nd load')
                 setSearching(false)
                 setMatch(result);
 
@@ -218,29 +225,19 @@ export default function MatchSearchScreen(props) {
         const interval = setInterval(() => {
             if (searching) {
                 pollQueue().then((result) => {
-                    console.log('polling', result);
-
                     if (result.data.data == "No queue with id found") {
                         setSearching(false);
-
                         clearInterval(interval);
-
                     }
                     if (result.data.data == 'searching') {
                         console.log('searching');
                     }
 
                     if (result.data.data == 'match found') {
-
-                        console.log('match found');
                         setOnLoad(false);
                         setSearching(false);
                         clearInterval(interval);
                     }
-
-
-
-
                 })
                     .catch((error) => { console.log('poll queue error', error) })
             } else {
