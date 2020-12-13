@@ -1,5 +1,15 @@
 DEC 9 2020
 
-- fix profile picture, check box saving on profile screen
+
+- fix profile picture saving
+- fix check box saving on profile screen
 - backend : only allow matching with same opponent one at a time
 - improve UI of match making screen
+
+
+Dec 10 2020
+x fix check box saving on profile screen
+x fix profile picture saving
+x set up Firebase storage for storing images
+- backend : only allow matching with same opponent one at a time
+- improve UI of match making screen-

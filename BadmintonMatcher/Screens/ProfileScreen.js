@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
 import CheckBox from '@react-native-community/checkbox';
 import Icon from "react-native-vector-icons/MaterialIcons";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons"
 import ImagePicker from "react-native-image-picker";
+import storage from '@react-native-firebase/storage';
 import {
     ScrollView,
     View,
@@ -31,7 +33,7 @@ function InputRow(props) {
                 <View style={{ flex: 1, flexDirection: 'row', padding: 20, justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={{ fontSize: 15, color: 'white' }}>{props.label}</Text>
                     <TouchableOpacity onPress={() => { setEditable(false); props.onConfirm() }} >
-                        <Icon style={{ marginBottom: 5 }} color='white' name={"done"} size={20} />
+                        <Text style={{color:'white'}}>Save</Text>
                     </TouchableOpacity>
 
                 </View>
@@ -76,7 +78,7 @@ function TextBox(props) {
                 <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ fontSize: 12, color: 'white' }}>{props.label}</Text>
                     <TouchableOpacity onPress={() => { setEditMode(false); props.onConfirm() }} >
-                        <Icon color='white' name={"done"} size={20} />
+                        <Text style={{color:'white'}}>Save</Text>
                     </TouchableOpacity>
 
                 </View>
@@ -129,40 +131,61 @@ function TextBox(props) {
 
 function DisplayBanner(props) {
     const [user, setUser] = useState(auth().currentUser);
-    const[profileUri,setUri] = useState(props.data.profilePicUrL)
+    const [profileUri, setUri] = useState(props.data.profilePicUrL)
+    const [storageRef,setStorageRef] = useState({})
+
+    //Load reference to user's cloud storagte
+    useEffect( ()=>{
+        setStorageRef(storage().ref(user.uid +'/profile_image'));
+        console.log(profileUri);
+    },[ ])
+
+
+    const saveProfilePicture =() => {
+
+        database().ref('/clients/' + user.uid + '/profilePicUrL/').set(profileUri).then((result) => {
+            console.log('saving results', profileUri);
+        })
+    }
+
+    const profileImage = (profileUri && storageRef ) ? (  <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={{ uri: profileUri }}></Image>) : <MaterialCommunityIcons  size={100} name='face-profile'/>
     return (
         <View style={{ flex: 1, margin: 5, maxHeight: '50%', alignItems: 'center', justifyContent: 'flex-start' }} >
             <Text style={{ color: 'white', fontSize: 25, margin: 10 }}>Personal Profile</Text>
-
             <TouchableOpacity
-                style={{flex:1}}
+                style={{ flex: 1 }}
                 onPress={() => {
                     ImagePicker.launchImageLibrary({
                         mediaType: 'photo',
                         includeBase64: false,
                         maxHeight: 200,
-                        maxWidth: 200,
-
-
-                    },(response)=>{
-                        console.log('test image picker response',response);
-                        setUri(response.uri)
-
-                        auth().currentUser.updateProfile({photoURL:profileUri});
+                        maxWidth: 200,  
+                    },(response) => {
+                        //setUri(response.uri)
+                        storageRef.putFile(response.uri).then(()=>{
+                           
+                            storageRef.getDownloadURL().then((value)=>{
+                                console.log('downlaodUrl of cloud ref',value);
+                                setUri(value);
+                                saveProfilePicture();
+                            }).catch((error)=>{
+                                console.log('No url found at ref');
+                                setUri(null);
+                            })
+                        })
+                        //auth().currentUser.updateProfile({ photoURL: profileUri });
+                        //
                     })
-                }
-                }
+                
+                }}
             >
                 <View style={{ flex: 1, flexDirection: 'row' }}>
-                    <Image style={{ backgroundColor: 'white', width: 150, height: 150, borderRadius: 150 / 2 }} source={{ uri: profileUri }}></Image>
+                    {profileImage}
                     <Icon style={{ marginBottom: 5 }} color='black' name={"image"} size={30} />
-
                 </View>
 
 
             </TouchableOpacity>
-
-
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.display_name}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>MMR:{props.data.mmr}</Text>
             <Text style={{ color: 'white', fontSize: 20, margin: 10 }}>{props.data.email}</Text>
@@ -198,17 +221,8 @@ function Info(props) {
     const [phoneNum, setPhoneNum] = useState(props.profileData['phoneNum'])
     const [racket, setRacket] = useState(props.profileData['racket'])
 
-    const buildSubmitData = () => {
 
-        return {
-            gender: gender,
-            description: description,
-            game_mode: matchType,
-            years_of_exp: yearsExp,
-            phoneNum: phoneNum,
-            racket: racket
-        };
-    }
+    console.log('LOADED STATE', gender, matchType)
 
     const saveData = (key, data) => {
         console.log('data to be sent', key, data);
@@ -270,8 +284,9 @@ function MultiSelectBox(props) {
     const [editable, setEditMode] = useState(false)
     const [mainLabel, setLabels] = useState(props.mainLabel);
     const [responseLabels, setResponseLabels] = useState(props.labels)
-    const [value, setValue] = useState(props.value);
+    const [value, setValue] = useState(props.value ? props.value : 0);
 
+    console.log('multiSelectBox value', value);
     if (props.labels == null || props.labels.length == 0) {
         return null;
     }
@@ -299,14 +314,22 @@ function MultiSelectBox(props) {
 
 
 
-    const iconButton = editable ? (<Icon color='white' name={"done"} size={20} />) : (<Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />)
+    const iconButton = editable ? (<Text style={{color:'white'}}>Save</Text>) : (<Image source={editIcon} style={{ height: 10, height: 10 }} height={20} width={20} />)
     const labelColor = editable ? 'white' : 'black';
 
     return (
         <View style={{ flex: 1, margin: 20, flexDirection: 'column' }}>
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ color: labelColor }}>{mainLabel}:</Text>
-                <TouchableOpacity onPress={() => { setEditMode(!editable) }} >
+                <TouchableOpacity onPress={() => {
+
+                    if (editable) {
+                        props.onConfirm();
+
+                    }
+                    setEditMode(!editable);
+
+                }} >
                     {iconButton}
                 </TouchableOpacity>
             </View>
@@ -333,8 +356,6 @@ export default function ProfileScreen(props) {
         database().ref('/clients/' + user.uid + '/profile').set(data).then((result) => {
             console.log('saving results', result);
         })
-
-
     }
 
     useEffect(() => {
