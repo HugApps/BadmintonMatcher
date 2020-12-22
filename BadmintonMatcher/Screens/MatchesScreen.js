@@ -8,7 +8,7 @@ const reference = database().ref('/users/123');
 import {
     View,
     Text,
-    TouchableOpacity,  FlatList,Button
+    TouchableOpacity, FlatList, Button
 } from 'react-native';
 
 import auth from '@react-native-firebase/auth';
@@ -89,53 +89,76 @@ function TabItem(props) {
 //<a href="https://www.vecteezy.com/free-vector/sport">Sport Vectors by Vecteezy</a>
 
 export default function MatchesScreen(props) {
+
     const [user, setUser] = useState(auth().currentUser);
     const [matches, setMatches] = useState([]);
     const [match_status, setSearchMatchStatus] = useState('queued');
     const [match_status_options, setOptions] = useState(['queued', 'pending', 'scheduled', 'complete'])
-
-
-    const rejectMatch = (match_id)=>{
-        console.log('will remove match',match_id);
+    const [loading,setLoading] = useState(true);
+  
+    const rejectMatch = async (match_id) => {
+        let delete_result = await database().ref('/matches/' + match_id).remove();
+        setLoading(!loading);
     }
-
 
     //moves match status from queued to pending
-    const confirmMatch = async (match)=>{
-        let call_result = await functions().httpsCallable('updateMatchStatus')({match:match})
+    const confirmMatch = async (match) => {
+        let call_result = await functions().httpsCallable('updateMatchStatus')({ match: match })
     }
 
-    useEffect(() => {
+    const fetchMatches = async () => {
 
         database().ref('/clients/' + user.uid + '/matches').orderByChild('status').equalTo(match_status).once('value').then((snapShot) => {
             if (snapShot.val()) {
                 let new_matches = snapShot.val();
-                setMatches(Object.keys(new_matches).map((match_key) => {
-                    return {id:match_key,...new_matches[match_key]}
+                let keys = Object.keys(snapShot.val());
+                let oldMatches = [...matches];
+                keys.forEach((v) => {
 
-                }));
+                    oldMatches.push(
+                        { id: v, ...new_matches[v] }
 
-                console.log(matches);
-
+                    )
+                })
+                setMatches(oldMatches);
             } else {
                 setMatches([]);
             }
 
         })
-    }, [match_status]);
+
+
+    }
+
+    useEffect(() => {
+        const unsubscribe = props.navigation.addListener('focus', () => {
+            console.log('detect focus event')
+            fetchMatches();
+            // do something
+        });
+
+        return unsubscribe;
+    }, [props.navigation]);
+
+
+    useEffect(() => {
+        fetchMatches();
+    }, [match_status,loading]);
+
+
 
     let listItem = ({ item, index }) => {
         if (item.opponent) {
             return (
 
-                <View style={{ flex: 1, backgroundColor:'#f6f6f6',margin:10,alignItems:'center',justifyContent: 'space-evenly', flexDirection: 'row' }}>
-                    <View style={{ flex: 1,margin:10 }}>
-                        <Text style={{fontSize:18,padding:5}}>{item.opponent.display_name}</Text>
-                        <Text style={{padding:5}}>MMR: {item.opponent.mmr}</Text>
+                <View style={{ flex: 1, backgroundColor: '#f6f6f6', margin: 10, alignItems: 'center', justifyContent: 'space-evenly', flexDirection: 'row' }}>
+                    <View style={{ flex: 1, margin: 10 }}>
+                        <Text style={{ fontSize: 18, padding: 5 }}>{item.opponent_details.display_name}</Text>
+                        <Text style={{ padding: 5 }}>MMR: {item.opponent_details.mmr}</Text>
                     </View>
-                    <View style={{flex:1,margin:10}}>
-                        <Button onPress={()=>{confirmMatch(item)}} style={{padding:5}}title={"Accept"}/>
-                        <Button onPress={()=>{rejectMatch(item.match_detail_id)}} style={{padding:5}} title={'Reject'}/>
+                    <View style={{ flex: 1, margin: 10 }}>
+                        <Button onPress={() => { confirmMatch(item) }} style={{ padding: 5 }} title={"Accept"} />
+                        <Button onPress={() => { rejectMatch(item.id) }} style={{ padding: 5 }} title={'Reject'} />
                     </View>
                 </View>
             )
@@ -147,10 +170,10 @@ export default function MatchesScreen(props) {
             <Text style={{ margin: 10, fontSize: 18, fontWeight: 'bold', textAlign: 'center' }}>My Matches</Text>
 
             <MatchTabs
-                onSelect={(index) => { console.log('index selected', index); setSearchMatchStatus(match_status_options[index]) }}
+                onSelect={(index) => { setSearchMatchStatus(match_status_options[index]) }}
                 activeTint={'#AF26D9'}
                 inActiveTint={'black'}
-                labels={["New!", "Pending", "Active", "History"]}
+                labels={["Active", "History"]}
             />
 
             <FlatList

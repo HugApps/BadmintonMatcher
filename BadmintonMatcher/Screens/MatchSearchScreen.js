@@ -76,14 +76,16 @@ function MatchInfo(props) {
 }
 
 function MatchSummary(props) {
+
     if (props.match == null || props.match == '') { return null; }
-    let matchData = Object.keys(props.match).map((v,index)=>{
-        return {id:v,...props.match[v]}
+    let matchData = Object.keys(props.match).map((v, index) => {
+        return { id: v, ...props.match[v] }
     })
-    const[opponent,setOpponent] =useState(props.match.opponent);
-    const[myData,setMyData] = useState({});
+    const [opponent, setOpponent] = useState(props.match.opponent_details);
+
+    const [myData, setMyData] = useState({});
     //temporary way of getting your own data!, neeed redux to share profile data globally
-    useEffect(()=>{
+    useEffect(() => {
         const user = auth().currentUser
         database().ref('/clients/' + user.uid).once('value').then(snapShot => {
             const userDetails = snapShot.val();
@@ -97,7 +99,7 @@ function MatchSummary(props) {
 
 
 
-    },[ ])
+    }, [])
 
     //Need easy way to fetch personal account data to display here
     return (
@@ -110,10 +112,10 @@ function MatchSummary(props) {
             <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 30, textAlign: 'center', color: 'red' }}>VS</Text>
             </View>
-            
+
             <View style={{ flex: 3, alignItems: 'center', justifyContent: 'space-between', margin: 10 }}>
                 <Text style={{ margin: 10, fontSize: 20 }}>{myData.display_name} </Text>
-                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={{ uri:myData.display_pic }}></Image>
+                <Image style={{ backgroundColor: 'white', width: 100, height: 100, borderRadius: 80 / 2 }} source={{ uri: myData.display_pic }}></Image>
                 <Text style={{ margin: 10, fontSize: 20 }}>MMR:{myData.mmr}</Text>
             </View>
         </View>
@@ -171,16 +173,18 @@ export default function MatchSearchScreen(props) {
 
 
     const checkMatches = (callback) => {
+        //Make httpsCallable call that gets matches and their details ?
+       // let callable = functions().httpsCallable('getMatchWithSummary')({ user_id: user.uid })
         database().ref('/clients/' + user.uid + '/matches').limitToLast(1).on('child_added', (snapShot) => {
             let newMatch = snapShot.val();
-            console.log('DEBUG NEW MATCH RESULTS',newMatch);
+            console.log('debug checkMatches',snapShot.val());
             callback(newMatch);
         })
     }
 
     const testCreateQueue = () => {
         let callable = functions().httpsCallable('addToMatchMakingQueue');
-        callable({user:'test'})
+        callable({ user: 'test' })
             .then((res) => {
                 setSearching(true)
             })
@@ -207,9 +211,9 @@ export default function MatchSearchScreen(props) {
 
 
         checkMatches((result) => {
-                // have to get a way to hide old matches from reappearing
-                setSearching(false)
-                setMatch(result);
+            // have to get a way to hide old matches from reappearing
+            setSearching(false)
+            setMatch(result);
 
         });
 
@@ -230,7 +234,7 @@ export default function MatchSearchScreen(props) {
                         clearInterval(interval);
                     }
                     if (result.data.data == 'searching') {
-                        console.log('searching');
+
                     }
 
                     if (result.data.data == 'match found') {
