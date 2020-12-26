@@ -47,9 +47,23 @@ function CancelButton(props) {
 }
 
 function MatchFound(props) {
-    return (<TouchableOpacity style={{ flex: 1, maxWidth: '70%', maxHeight: 250, borderRadius: 10, backgroundColor: 'green', padding: 30 }} onPress={() => { props.onPress() }}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>VIEW MATCH</Text>
-    </TouchableOpacity>)
+    return (
+
+        <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' }}>
+            <TouchableOpacity style={{ flex: 0.5, maxHeight: 250, borderRadius: 10, margin: 10, backgroundColor: 'green', padding: 20 }} onPress={() => { props.onAccept() }}>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Accept</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={{ flex: 0.5, maxHeight: 250, borderRadius: 10, margin: 10, backgroundColor: 'red', padding: 20 }} onPress={() => { props.onDecline() }}>
+                <Text style={{ color: 'white', textAlign: 'center' }}>Decline</Text>
+            </TouchableOpacity>
+
+        </View>
+
+
+
+
+    )
 
 }
 
@@ -146,7 +160,20 @@ export default function MatchSearchScreen(props) {
 
         let callable = functions().httpsCallable('cancelQueue');
         return callable();
+    }
 
+    //Deletes match and then returns to search state
+    const rejectMatch = async() => {
+        console.log('rejectMatch', matches);
+        let callable = functions().httpsCallable('updatePlayerMatchStatus');
+        return callable({match_id:matches.id,status_index:1})
+
+    }
+
+    //Moves match to 'accepted' state , redirect to match edit screen
+    const acceptMatch = () => {
+        let callable = functions().httpsCallable('updatePlayerMatchStatus');
+        return callable({match_id:matches.id,status_index:0});
 
     }
 
@@ -156,7 +183,17 @@ export default function MatchSearchScreen(props) {
         }
 
         if (matches) {
-            return <MatchFound onPress={() => { setMatch(null), setSearching(null) }} />
+            return (
+                <MatchFound
+                    onAccept={() => {
+                        acceptMatch().then((result)=>{})
+                    }}
+                    onDecline={() => {
+                        rejectMatch().then((res)=>{})
+                    }}
+                />
+
+            )
         } else {
             return <SearchButton onPress={() => testCreateQueue()} />
         }
@@ -171,13 +208,13 @@ export default function MatchSearchScreen(props) {
     }
 
 
-
     const checkMatches = (callback) => {
         //Make httpsCallable call that gets matches and their details ?
-       // let callable = functions().httpsCallable('getMatchWithSummary')({ user_id: user.uid })
+        // let callable = functions().httpsCallable('getMatchWithSummary')({ user_id: user.uid })
         database().ref('/clients/' + user.uid + '/matches').limitToLast(1).on('child_added', (snapShot) => {
-            let newMatch = snapShot.val();
-            console.log('debug checkMatches',snapShot.val());
+            let newMatch = {id:snapShot.key,...snapShot.val()} 
+            console.log('key',snapShot.key)
+            console.log('val',snapShot.val());
             callback(newMatch);
         })
     }
@@ -190,8 +227,6 @@ export default function MatchSearchScreen(props) {
             })
             .catch((error) => { console.log('queue failed', error) })
     }
-
-
 
 
     useEffect(() => {
@@ -218,16 +253,13 @@ export default function MatchSearchScreen(props) {
         });
 
 
-    }, []);
-
-
+    }, [ ]);
 
 
     useEffect(() => {
-
-
         const interval = setInterval(() => {
             if (searching) {
+                console.log('searching',searching)
                 pollQueue().then((result) => {
                     if (result.data.data == "No queue with id found") {
                         setSearching(false);

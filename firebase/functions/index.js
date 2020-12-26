@@ -113,7 +113,6 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
 
                     let alreadyMatched = [];
                     snapShot.forEach((match) => {
-                        console.log('current matches', match.val());
                         let currentMatchStatus = match.val()['status'];
 
                         if (currentMatchStatus == 'queued' || currentMatchStatus == 'active') {
@@ -122,7 +121,7 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                             }
                         }
                     })
-                    console.log('DEBUG already matched', alreadyMatched)
+
                     if (alreadyMatched.length > 0) {
                         return { data: 'error' }
                     }
@@ -150,7 +149,7 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                         });
                         //If no matches, increase current player's range
                         if (potentialMatches.length == 0) {
-                            return db.ref('match_queue/' + context.auth.uid + '/range').set(range + 100).then((result) => { console.log('updated range'); return { data: 'searching' } })
+                            return db.ref('match_queue/' + context.auth.uid + '/range').set(range + 100).then((result) => { return { data: 'searching' } })
                         } else {
                             potentialMatches.sort((a, b) => {
                                 return a.difference - b.difference;
@@ -168,19 +167,21 @@ exports.pollMatchQueue = functions.https.onCall((data, context) => {
                                 date: null,
                                 team_1: currentPlayerQueue['user_id'],
                                 team_1_data: currentPlayerQueue['user'],
+                                team_1_status:'pending',
                                 team_2_data: potentialMatches[0].val,
                                 team_2: potentialMatches[0].id,
                                 team_1_mmr: currentPlayerQueue["mmr"],
-                                team_2_mmr: potentialMatches[0].val["mmr"]  
+                                team_2_mmr: potentialMatches[0].val["mmr"],
+                                team_2_status:'pending',
                             }).then((result) => {
-                                console.log('match created', result); return { data: 'match found' };
+                                return { data: 'match found' };
                             });
 
                         }
 
-                    }).catch((error) => { console.log('polling error', error.details, error.code); return { error: "error here???" } })
+                    }).catch((error) => { return { error: "error here???" } })
 
-                }).catch((error) => { console.log('match data error', error.details, error.code); return { error: "error here???" } })
+                }).catch((error) => { return { error: "error here???" } })
 
             }
         }).catch((error) => { return { data: 'error' } });
@@ -284,21 +285,20 @@ exports.createMatches = functions.database.ref('matches/{id}')
                     */
                 })
             .then((rb) => { return snapShot.ref.set(snapShot.val()) })
-            .catch((err) => { console.log('failed to delete'); return snapShot.ref.set(snapShot.val()) }
+            .catch((err) => { return snapShot.ref.set(snapShot.val()) }
 
             )
     });
 
 
-exports.deleteMatches = functions.database.ref('matches/{id}').onDelete( async (snapShot, context) => {
+exports.deleteMatches = functions.database.ref('matches/{id}').onDelete(async (snapShot, context) => {
     let deletedMatch = snapShot.val();
-    console.log('debug deletedMatch', deletedMatch,deletedMatch.key);
     let playerOne = deletedMatch['team_1'];
     let playerTwo = deletedMatch['team_2'];
-    let playerOneRemoved = await db.ref('/clients/' + playerOne+'/matches/' + snapShot.key).remove();
-    let playerTwoRemoved = await db.ref('/clients/' + playerTwo+'/matches/' + snapShot.key).remove();
-    if(playerOneRemoved && playerTwoRemoved) {
-        return {status:'Match deleted'}
+    let playerOneRemoved = await db.ref('/clients/' + playerOne + '/matches/' + snapShot.key).remove();
+    let playerTwoRemoved = await db.ref('/clients/' + playerTwo + '/matches/' + snapShot.key).remove();
+    if (playerOneRemoved && playerTwoRemoved) {
+        return { status: 'Match deleted' }
     }
 
 })
@@ -310,6 +310,50 @@ exports.deleteMatches = functions.database.ref('matches/{id}').onDelete( async (
 
 })
 */
+
+
+exports.teamOneStatusUpdated = functions.database.ref('matches/{match_id}/{match_field}').onUpdate(async (update, context) => {
+    const updatedValue = update.after.val();
+    const params = context.params;
+    const match_id = params.match_id;
+    const field = params.match_field
+    db.ref('/matches/'+ match_id).on('value',(snapShot) =>{
+
+        let {team_1,team_2,team_1_status,team_2_status ,team_1_data,team_2_data} = snapShot.val();
+        
+        console.log('debug snapshot data',team_1,team_2)
+
+        if(field == 'team_1_status' || field == 'team_2_status') {
+          
+            if(updatedValue == 'decline') {
+               //if status is not the same, notify the one who is true
+               if(team_1_status != team_2_status){
+
+                   let sender = field == "team_1_status" ? team_1_data['display_name'] : team_2_data['display_name'];
+
+                   let notify_target = (sender == team_1_data['display_name']) ? team_2 : team_1;
+                  
+                   let message = {
+                       title: 'Match cancelled',
+                       message:'Match with ' + sender + ' is cancelled'
+                   }
+                   db.ref('/clients/'+ notify_target+'/messages').push(message);
+                   db.ref('/matches/'+ match_id).remove();
+               }
+    
+            }
+    
+    
+    
+        }
+    
+    })
+
+    return {status:'ok'}
+})
+
+
+
 
 
 
@@ -364,23 +408,19 @@ exports.updateUserProfile = functions.https.onCall((data, context) => {
     }).catch((error) => { return error })
 });
 
-exports.getLatestMatch = functions.https.onCall((data,context)=>{
+exports.getLatestMatch = functions.https.onCall((data, context) => {
     let user_id = context.auth.uid;
-    db.ref('/clients/' + user_id +'/matches').orderByKey().once('child_added').then((result)=>{
-        if(result){
-            result.forEach((r)=>{
-                console.log('LATEST MATCH KEY',r)
-            })
-           
-            return db.ref('/matches/'+result.key ).once('child_added').then((snapShot)=>{
-                console.log('LATEST MATCH DETAILS',snapShot.val())
+    db.ref('/clients/' + user_id + '/matches').orderByKey().once('child_added').then((result) => {
+        if (result) {
+
+            return db.ref('/matches/' + result.key).once('child_added').then((snapShot) => {
                 return snapShot.val()
             })
-            .catch((matchError)=>{return{status:'fail to get match details'}})
+                .catch((matchError) => { return { status: 'fail to get match details' } })
         }
 
-    }).catch((error)=>{
-        return {status:error}
+    }).catch((error) => {
+        return { status: error }
     })
 
 })
@@ -391,14 +431,46 @@ exports.updateMatchStatus = functions.https.onCall((data, context) => {
     //* have to update both player's matches??? and match details
     db.ref('match_details/' + match.match_detail_id + '/status/').set(valid_statusues[1]).then((result) => {
         if (result) {
-            console.log('success', result);
             return { success: true }
-
         } else {
-            console.log('fail', result);
             return { success: false }
         }
     })
 })
+
+
+
+exports.updatePlayerMatchStatus = functions.https.onCall((data, context) => {
+    let match_id = data.match_id;
+    let status_index = data.status_index;
+    let userId = context.auth.uid;
+    let valid_statusues = ['accept', 'decline', 'complete'];
+
+    //get Match requested
+
+    db.ref('/matches/' + match_id).once('value').then((snapShot) => {
+        let matchRequested = snapShot.val();
+        let user_team = null;
+        // determine which team they are in this match object
+        if (matchRequested['team_1'] == userId) {
+            user_team = 'team_1_status'
+
+        } else {
+            user_team = 'team_2_status'
+        }
+        return db.ref('/matches/' + match_id + '/').child(user_team).set(valid_statusues[status_index]).then((result) => {
+            if (result) {
+                return { success: true }
+            } else {
+                return { success: false }
+            }
+        })
+    })
+
+})
+
+
+
+
 
 exports.client_api = functions.https.onRequest(app);
