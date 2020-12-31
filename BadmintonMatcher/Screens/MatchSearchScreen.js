@@ -2,8 +2,6 @@ import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import database from '@react-native-firebase/database';
 
-
-
 import {
     SafeAreaView,
     StyleSheet,
@@ -13,7 +11,7 @@ import {
     StatusBar,
     Image,
     TextInput,
-    TouchableOpacity, ActivityIndicator
+    TouchableOpacity, ActivityIndicator, Alert
 } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -163,17 +161,17 @@ export default function MatchSearchScreen(props) {
     }
 
     //Deletes match and then returns to search state
-    const rejectMatch = async() => {
+    const rejectMatch = async () => {
         console.log('rejectMatch', matches);
         let callable = functions().httpsCallable('updatePlayerMatchStatus');
-        return callable({match_id:matches.id,status_index:1})
+        return callable({ match_id: matches.id, status_index: 1 })
 
     }
 
     //Moves match to 'accepted' state , redirect to match edit screen
     const acceptMatch = () => {
         let callable = functions().httpsCallable('updatePlayerMatchStatus');
-        return callable({match_id:matches.id,status_index:0});
+        return callable({ match_id: matches.id, status_index: 0 });
 
     }
 
@@ -186,10 +184,18 @@ export default function MatchSearchScreen(props) {
             return (
                 <MatchFound
                     onAccept={() => {
-                        acceptMatch().then((result)=>{})
+                        acceptMatch().then((result) => {
+                            console.log('ACCEPT RESULT',result)
+                            setMatch(null);
+                            setSearching(false);
+                         })
                     }}
                     onDecline={() => {
-                        rejectMatch().then((res)=>{})
+                        rejectMatch().then((res) => {
+                            console.log('REJECT RESULT',res);
+                            setMatch(null);
+                            setSearching(false);
+                         })
                     }}
                 />
 
@@ -212,9 +218,9 @@ export default function MatchSearchScreen(props) {
         //Make httpsCallable call that gets matches and their details ?
         // let callable = functions().httpsCallable('getMatchWithSummary')({ user_id: user.uid })
         database().ref('/clients/' + user.uid + '/matches').limitToLast(1).on('child_added', (snapShot) => {
-            let newMatch = {id:snapShot.key,...snapShot.val()} 
-            console.log('key',snapShot.key)
-            console.log('val',snapShot.val());
+            let newMatch = { id: snapShot.key, ...snapShot.val() }
+            console.log('key', snapShot.key)
+            console.log('val', snapShot.val());
             callback(newMatch);
         })
     }
@@ -253,13 +259,13 @@ export default function MatchSearchScreen(props) {
         });
 
 
-    }, [ ]);
+    }, []);
 
 
     useEffect(() => {
         const interval = setInterval(() => {
             if (searching) {
-                console.log('searching',searching)
+                console.log('searching', searching)
                 pollQueue().then((result) => {
                     if (result.data.data == "No queue with id found") {
                         setSearching(false);
@@ -287,6 +293,26 @@ export default function MatchSearchScreen(props) {
 
 
 
+    //add subscriber to listen to additions to user's messages
+    useEffect(() => {
+        const messagesListener = database().ref('/clients/' + auth().currentUser.uid + '/messages')
+        messagesListener.on('child_added', (snapShot) => {
+            if (snapShot) {
+                const { message, title } = snapShot.val();
+                Alert.alert(title, message, [
+                    {
+                        text: 'Ok',
+                        onPress: async () => await database().ref('/clients/' + auth().currentUser.uid + '/messages/' + snapShot.key).remove(),
+                        style:'cancel'
+                    },
+
+                ]);
+            }
+        })
+
+        return () => database().ref('/clients/' + auth().currentUser.uid + '/messages').off('child_added', messagesListener);
+
+    }, [])
     return (
         <View style={{ flex: 5, margin: 10, backgroundColor: 'white', alignItems: 'center', justifyContents: 'space-evenly' }}>
 

@@ -97,8 +97,9 @@ export default function MatchesScreen(props) {
     const [loading,setLoading] = useState(true);
   
     const rejectMatch = async (match_id) => {
-        let delete_result = await database().ref('/matches/' + match_id).remove();
-        setLoading(!loading);
+        let callable = functions().httpsCallable('updatePlayerMatchStatus');
+        return callable({ match_id: match_id, status_index: 1 })
+     
     }
 
     //moves match status from queued to pending
@@ -157,8 +158,8 @@ export default function MatchesScreen(props) {
                         <Text style={{ padding: 5 }}>MMR: {item.opponent_details.mmr}</Text>
                     </View>
                     <View style={{ flex: 1, margin: 10 }}>
-                        <Button onPress={() => { confirmMatch(item) }} style={{ padding: 5 }} title={"Accept"} />
-                        <Button onPress={() => { rejectMatch(item.id) }} style={{ padding: 5 }} title={'Reject'} />
+                        <Button onPress={() => { confirmMatch(item) }} style={{ padding: 5 }} title={"EDIT"} />
+                        <Button onPress={() => { rejectMatch(item.id).then((res)=>{if(res) setLoading(!loading);}) }} style={{ padding: 5 }} title={'Reject'} />
                     </View>
                 </View>
             )
