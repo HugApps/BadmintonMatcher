@@ -21,6 +21,7 @@ import auth from '@react-native-firebase/auth';
 import ProfileScreen from './ProfileScreen';
 import SearchScreen from './MatchSearchScreen';
 import MatchesScreen from './MatchesScreen';
+import MatchEdit from './MatchEdit';
 //import console = require('console');
 
 
@@ -58,14 +59,15 @@ function DemoScreen(props) {
 
 export default function DashBoard(props) {
 
-  console.log('DashBoard',props.route.params)
+  console.log('DashBoard',props.route.params.match_id)
 
   return (
       <Drawer.Navigator initialRouteName="Home" drawerContent={stuff => <CustomDrawerContainer logout={()=>{props.route.params.logout()}} {...stuff}/>}>
         <Drawer.Screen name="Main" component={DemoScreen} initialParams={{  title:'main page' }} />
         <Drawer.Screen name="Profile" component={ProfileScreen} initialParams={{title: 'profile page' }} />
         <Drawer.Screen name="Matches" component={MatchesScreen} initialParams={{  title:'Match history page' }} />
-        <Drawer.Screen name="Search" component={SearchScreen} nitialParams={{   title: 'Player search' }} />
+        <Drawer.Screen name="Search" component={SearchScreen} intialParams={{   title: 'Player search' }} />
+        <Drawer.Screen name="MatchEdit" component={MatchEdit} nitialParams={{   title: 'Match Edit' }} />
       </Drawer.Navigator>
   );
 }

@@ -1,0 +1,152 @@
+{
+    "CLEAR_ONE": {
+        "name": "Clear one richmond",
+        "address": {
+            "street": "2345 no3 rd",
+            "city": "Richmond",
+            "postal_code": "VVV333",
+            "province": "BC",
+            "country": "CA"
+        },
+        "phone": "604-030-7660",
+        "website": "https://www.clearonebadminton.com/",
+        "drop_in": {
+            "schedule": {
+                "M": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "T": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "W": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "F": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ]
+            },
+            "price": "$5.78"
+        }
+    },
+    "STAGE_18": {
+        "name": "Stage18",
+        "address": {
+            "street": "2351 No 6 Rd #170",
+            "city": "Richmond",
+            "postal_code": "V6V 1P3",
+            "province": "BC",
+            "country": "CA"
+        },
+        "phone": "(604) 278-3233",
+        "website": "https://www.clearonebadminton.com/",
+        "drop_in": {
+            "schedule": {
+                "M": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "T": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "W": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ]
+            },
+            "price": "$5.78"
+        },
+        "bookings": {
+            "price": "$25.00",
+            "schedule": {
+                "M": [
+                    {
+                        "start": "12:00PM",
+                        "end": "6:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "T": [
+                    {
+                        "start": "12:00PM",
+                        "end": "6:00PM"
+                    },
+                    {
+                        "start": "6:00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "W": [
+                    {
+                        "start": "12:00PM",
+                        "end": "6:00PM"
+                    },
+                    {
+                        "start": ":00AM",
+                        "end": "11:00AM"
+                    }
+                ],
+                "F": [
+                    {
+                        "start": "12:00PM",
+                        "end": "2:00PM"
+                    },
+                    {
+                        "start": "10:00AM",
+                        "end": "11:00AM"
+                    }
+                ]
+            }
+        }
+    }
+}

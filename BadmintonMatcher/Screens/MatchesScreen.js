@@ -105,6 +105,7 @@ export default function MatchesScreen(props) {
     //moves match status from queued to pending
     const confirmMatch = async (match) => {
         let call_result = await functions().httpsCallable('updateMatchStatus')({ match: match })
+        props.navigation.navigate('MatchEdit',{match_id:match});
     }
 
     const fetchMatches = async () => {
@@ -158,7 +159,7 @@ export default function MatchesScreen(props) {
                         <Text style={{ padding: 5 }}>MMR: {item.opponent_details.mmr}</Text>
                     </View>
                     <View style={{ flex: 1, margin: 10 }}>
-                        <Button onPress={() => { confirmMatch(item) }} style={{ padding: 5 }} title={"EDIT"} />
+                        <Button onPress={() => { confirmMatch(item.id) }} style={{ padding: 5 }} title={"EDIT"} />
                         <Button onPress={() => { rejectMatch(item.id).then((res)=>{if(res) setLoading(!loading);}) }} style={{ padding: 5 }} title={'Reject'} />
                     </View>
                 </View>

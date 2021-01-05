@@ -342,8 +342,8 @@ exports.teamOneStatusUpdated = functions.database.ref('matches/{match_id}/{match
                }
     
             }
-    
-    
+
+        
     
         }
     
