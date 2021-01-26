@@ -185,14 +185,14 @@ export default function MatchSearchScreen(props) {
                 <MatchFound
                     onAccept={() => {
                         acceptMatch().then((result) => {
-                            console.log('ACCEPT RESULT',result)
+  
                             setMatch(null);
                             setSearching(false);
                          })
                     }}
                     onDecline={() => {
                         rejectMatch().then((res) => {
-                            console.log('REJECT RESULT',res);
+       
                             setMatch(null);
                             setSearching(false);
                          })
@@ -219,8 +219,6 @@ export default function MatchSearchScreen(props) {
         // let callable = functions().httpsCallable('getMatchWithSummary')({ user_id: user.uid })
         database().ref('/clients/' + user.uid + '/matches').limitToLast(1).on('child_added', (snapShot) => {
             let newMatch = { id: snapShot.key, ...snapShot.val() }
-            console.log('key', snapShot.key)
-            console.log('val', snapShot.val());
             callback(newMatch);
         })
     }
@@ -231,7 +229,7 @@ export default function MatchSearchScreen(props) {
             .then((res) => {
                 setSearching(true)
             })
-            .catch((error) => { console.log('queue failed', error) })
+            .catch((error) => {  })
     }
 
 
@@ -248,7 +246,9 @@ export default function MatchSearchScreen(props) {
                 setSearching(false);
             }
 
-        }).catch((error) => { console.log('queue failed', error) });
+        }).catch((error) => {
+            
+         });
 
 
         checkMatches((result) => {
@@ -265,7 +265,7 @@ export default function MatchSearchScreen(props) {
     useEffect(() => {
         const interval = setInterval(() => {
             if (searching) {
-                console.log('searching', searching)
+              
                 pollQueue().then((result) => {
                     if (result.data.data == "No queue with id found") {
                         setSearching(false);
@@ -281,7 +281,7 @@ export default function MatchSearchScreen(props) {
                         clearInterval(interval);
                     }
                 })
-                    .catch((error) => { console.log('poll queue error', error) })
+                    .catch((error) => {  })
             } else {
                 clearInterval(interval);
             }

@@ -18,116 +18,26 @@ import {
     TouchableOpacity, ActivityIndicator
 } from 'react-native';
 
-import auth from '@react-native-firebase/auth';
-//Search database for drop in , booking locations
 /// @refresh reset 
 
-function MatchDetailForm(props) {
-    const [formData, setFormData] = useState(props.formData);
-    const [teamOneData, setTeamOneData] = useState(formData.team_1_data);
-    const [teamTwoData, setTeamTwoData] = useState(formData.team_2_data);
 
-    return (
-
-        <ScrollView style={{ flex: 1, margin: 10 }}>
-            <VenuePicker />
-            <View style={{ flex: 1, flexDirection: 'column', justifyContent: 'space-evenly' }}>
-
-                <View style={{ flex: 1, padding: 10, flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                    <Text style={{ flex: 1 }}>Date:</Text>
-                    <TextInput
-                        style={{ flex: 1 }}
-                        placeholder={"Day of match"}
-                        value={new Date()} />
-                    <Text style={{ flex: 1 }}>opponents date</Text>
-                </View>
-
-                <View style={{ flex: 1, padding: 10, flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                    <Text style={{ flex: 1 }}>Time:</Text>
-                    <TextInput
-                        style={{ flex: 1 }}
-                        placeholder={"Time of match"}
-                        value={new Date()} />
-                    <Text style={{ flex: 1 }}>opponents time</Text>
-                </View>
-
-                <View style={{ flex: 1, padding: 10, flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                    <Text style={{ flex: 1 }}>Venue Type:</Text>
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ textAlign: 'left', flex: 1, fontSize: 14, color: 'black', }}>Drop in</Text>
-                        <CheckBox
-                            style={{ margin: 10, width: 20, height: 20 }}
-                            boxType={'square'}
-                            onCheckColor={'blue'}
-                            onTintColor={'white'}
-                            tinColor={'white'}
-                            disabled={false}
-                            value={false}
-                            onValueChange={(index) => { }}>
-                        </CheckBox>
-
-                    </View>
+/*TODO
 
 
-                    <View style={{ flex: 1 }}>
-                        <Text style={{ textAlign: 'left', flex: 1, fontSize: 14, color: 'black', }}>Booking</Text>
-                        <CheckBox
-                            style={{ margin: 10, width: 20, height: 20 }}
-                            boxType={'square'}
-                            onCheckColor={'blue'}
-                            onTintColor={'white'}
-                            tinColor={'white'}
-                            disabled={false}
-                            value={false}
-                            onValueChange={(index) => { }}>
-                        </CheckBox>
-
-                    </View>
-
-                    <Text style={{ flex: 1 }}>Drop-in</Text>
-                </View>
+SCHEDULE PICKER LOADS SCHEDULE INFO FROM LOCATIONS PROP ISNTEAD OF LOCATION, 
+DEFAULT TO USER SAVED CONTENT --> DROP-IN 
+POPULATE MATCH TYPE BASED ON AVAIBLE KEYS OF SELECTED LOCATION 
 
 
-                <View style={{ flex: 1, padding: 10, flexDirection: 'row', justifyContent: 'space-evenly' }}>
-                    <Text style={{ flex: 1 }}>Match Location:</Text>
-                    <TextInput
-                        style={{ flex: 1 }}
-                        placeholder={"Location"}
-                        value={new Date()} />
-                    <Text style={{ flex: 1 }}>opponents location</Text>
-                </View>
 
-                <View style={{ flex: 1, margin: 10 }}>
-                    <Text>Chat/notes</Text>
-                    <TextInput
-                        multiline={true}
-                        numberOfLines={4}
-                        style={{ flex: 1 }}
-                        placeholder={"Enter message here"}
-                        value={new Date()} />
-                    <Button title={"Send"}></Button>
-                    <Text style={{ flex: 1 }}>opponents location</Text>
-
-                </View>
-
-                <View style={{ flex: 1, margin: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-evenly' }}>
-
-                    <Button title={'Save'} onPress={() => { }} />
-                    <Button title={'Reject'} onPress={() => { }} />
-
-
-                </View>
+*/
 
 
 
 
 
-            </View>
-
-        </ScrollView >
-
-    )
-}
+import auth from '@react-native-firebase/auth';
+//Search database for drop in , booking locations
 
 // Displays drop down, lets players pick a venue
 // takes in a callback, to pass back selected location to parent form component
@@ -137,8 +47,8 @@ function VenuePicker(props) {
     const [selectedLocation, setSelected] = useState(null);
     const [team_1_data, updateTeamAData] = useState(props.team_1_data);
     const [team_2_data, updateTeamBData] = useState(props.team_2_data);
-    const [currentPlayer,setCurrentPlayer] = useState('team_1_data');
-    const [ opponent,setOpponent] = useState('team_2_data');
+    const [currentPlayer, setCurrentPlayer] = useState('team_1_data');
+    const [opponent, setOpponent] = useState('team_2_data');
 
 
 
@@ -149,37 +59,42 @@ function VenuePicker(props) {
             if (snapShot) {
                 let locationArray = Object.keys(snapShot.val()).map((v, i) => {
 
-                    return { key:v,label: snapShot.val()[v].name, value:snapShot.val()[v], selected:currentPlayer.venue_key == v  }
+                    return { key: v, label: snapShot.val()[v].name, value: snapShot.val()[v], selected: currentPlayer.venue_key == v }
                 })
-                
+
                 setLocations(locationArray);
-                
+
             }
         })
-        
-    }, [ ])
+
+    }, [])
 
     //Check if user already selected a venue
-    useEffect(()=>{
-        
-            locations.forEach((l,index)=>{
-                if(l.key == currentPlayer.venue_key){
-                    console.log(l)
-                    setSelected(l);
-                }
-            })
-        
-    },[ ])
+    useEffect(() => {
 
-    useEffect(()=>{
-        if(props.team_1_data.id == auth().currentUser.uid) {
+        locations.forEach((l, index) => {
+            if (l.key == currentPlayer.venue_key) {
+
+                setSelected(l);
+            }
+        })
+
+    }, [])
+
+    useEffect(() => {
+        console.log('venue picker props',props.team_2_data.day)
+        if (props.team_1_data.id == auth().currentUser.uid) {
             setCurrentPlayer(props.team_1_data);
             setOpponent(props.team_2_data);
-        } else{
+        } else {
             setCurrentPlayer(props.team_2_data);
             setOpponent(props.team_1_data);
         }
-    },[ ])
+
+        updateTeamAData(props.team_1_data);
+        updateTeamBData(props.team_2_data);
+    },[props.team_1_data,props.team_2_data])
+
 
     const updateValue = (key, value) => {
         let currentTeam = props.team_1_data.id == auth().currentUser.uid ? 'team_1' : 'team_2';
@@ -188,16 +103,8 @@ function VenuePicker(props) {
         database().ref("/matches/" + props.match_id + '/' + currentTeam + '_data/').update(newValue);
     }
 
-    //make serverRequest when selectedLocation gets updated
-   /* useEffect(() => {
-        if(selectedLocation){
- 
-            updateValue('venue_key', selectedLocation.key)
-        }
-       
-    }, [selectedLocation])*/
-
     if (locations != null || locations.length > 0) {
+        console.log(team_2_data.day)
         return (
             <View style={{ flex: 1, }}>
                 <View style={{ flex: 1, margin: 10, backgroundColor: 'white' }}>
@@ -215,7 +122,7 @@ function VenuePicker(props) {
                                 justifyContent: 'flex-start'
                             }}
                             dropDownStyle={{ opacity: 1, zIndex: 1000, backgroundColor: 'white' }}
-                            onChangeItem={(item )=> {updateValue('venue_key', item.key); setSelected(item)}}
+                            onChangeItem={(item) => { updateValue('venue_key', item.key); setSelected(item.key) }}
                         />
                     </View>
 
@@ -226,11 +133,11 @@ function VenuePicker(props) {
                 </View>
 
                 <View>
-
-                   {currentPlayer.venue_key ?   <LocationSchedulePicker
+                    {locations  ? <LocationSchedulePicker
                         team_1_data={team_1_data}
                         team_2_data={team_2_data}
                         location={selectedLocation}
+                        locations={locations}
                         updateValue={(key, value) => { updateValue(key, value) }}
                     /> : null}
 
@@ -277,29 +184,47 @@ function FilterBox(props) {
 
 
 function LocationSchedulePicker(props) {
+    const [locations, setLocations] = useState(props.locations);
     const [location, setLocation] = useState(null);
     const [days, setDays] = useState([])
     const [hours, setHours] = useState([])
     const [filter, setFilter] = useState('drop_in');
     const [selectedDay, setDay] = useState(null);
     const [selectedTime, setTime] = useState(null);
-    const [currentPlayer,setCurrentPlayer] = useState(props.team_1_data);
-    const [opponent,setOpponent] = useState(props.team_2_data);
+    const [currentPlayer, setCurrentPlayer] = useState(props.team_1_data);
+    const [opponent, setOpponent] = useState(props.team_2_data);
+
+
+    useEffect(() => {
+        let locationMap = {};
+        props.locations.forEach((l) => {
+            locationMap[l.key] = l;
+        })
+        setLocations(locationMap);
+        setLocation(Object.keys(locationMap)[0]);
+    }, [props.locations])
+
+
 
 
     //Load existing data
-    useEffect(()=>{
-        console.log('props.location',props);
-        if(currentPlayer && currentPlayer.day && currentPlayer.time){
+    useEffect(() => {
+
+        if (currentPlayer && currentPlayer.day && currentPlayer.time) {
+
             setDay(currentPlayer.day);
             setTime(currentPlayer.time);
+        } else {
+
         }
-    },[ ])
+    }, [currentPlayer, locations])
 
 
-    useEffect(()=>{
+    //set player teams
+    useEffect(() => {
+       
         const deviceUser = auth().currentUser;
-        if(props.team_1_data.id ==  deviceUser.uid){
+        if (props.team_1_data.id == deviceUser.uid) {
             setCurrentPlayer(props.team_1_data)
             setOpponent(props.team_2_data);
         } else {
@@ -307,24 +232,27 @@ function LocationSchedulePicker(props) {
             setOpponent(props.team_1_data);
         }
 
-    }, [ ])
-    useEffect(() => {
-        if(props.location){
-            console.log('props.location',props.location);
-            setLocation(props.location.value);
+       
+    }, [props.team_1_data,props.team_2_data])
 
+
+    // after use picks a location key
+    useEffect(() => {
+        if (props.location) {
+            setLocation(props.location);
         }
-   
+
     }, [props.location])
 
 
     useEffect(() => {
-        if (location !=null) {
-            console.log('debug location',location);
-            if (location[filter]['schedule'] != null) {
-                let validDays = Object.keys(location[filter]['schedule']).map((d, index) => {
-                    const selected = currentPlayer.day == location[filter]['schedule'][d]
-                    return { label: d, value: location[filter]['schedule'][d], selected:selected }
+        if (location != null) {
+            let currentLocation = locations[location].value;
+            if (currentLocation[filter] != null) {
+
+                let validDays = Object.keys(currentLocation[filter]['schedule']).map((d, index) => {
+                    const selected = currentPlayer.day == currentLocation[filter]['schedule'][d]
+                    return { label: d, value: currentLocation[filter]['schedule'][d], selected: selected }
 
                 })
                 setDays(validDays)
@@ -333,25 +261,38 @@ function LocationSchedulePicker(props) {
             }
         }
 
-    }, [location, filter])
+    }, [props,location, filter])
 
     useEffect(() => {
+        if (locations == null || !location) { return; }
         let newHours = [];
-        if (selectedDay) {
+        let currentDay = currentPlayer.day ? currentPlayer.day : selectedDay;
+        let currentLocation = locations[location].value;
 
-            newHours = location[filter]['schedule'][selectedDay].map((v, i) => {
+        if (selectedDay && currentLocation && currentLocation[filter]) {
+
+            newHours = currentLocation[filter]['schedule'][currentDay].map((v, i) => {
                 return { label: v.start + "-" + v.end, value: v }
             })
+
+
 
             setHours(newHours);
         }
 
-    }, [selectedDay])
+    }, [props,location, selectedDay])
 
 
     //{location['drop_in'] ? <FilterBox label={'Drop-in'} value={filter} filter={'drop_in'} onSelect={() => { setFilter('drop_in') }} /> : null}
     //{location['bookings'] ? <FilterBox label={'Booking'} value={filter} filter={'bookings'} onSelect={() => { setFilter('bookings') }} /> : null}
 
+
+    if (location == null) {
+        return null;
+    }
+
+
+    console.log('LOCATION SCHEDULER UPDATED',props.team_2_data.day);
 
     return (
 
@@ -361,14 +302,14 @@ function LocationSchedulePicker(props) {
             <View style={{ flex: 1, zIndex: 1000, flexDirection: 'row', justifyContent: 'space-evenly' }}>
                 <Text style={{ flex: 1, margin: 10, fontWeight: 'bold' }}>You:</Text>
                 <DropDownPicker
-                    items={[{ label: 'Drop in', value: 'drop_in',selected: currentPlayer.match_type =='drop_in' }, { label: 'Booking', value: 'bookings',selected: currentPlayer.match_type =='bookings' }]}
-                    placeholder="Match Type"
+                    items={[{ label: 'Drop in', value: 'drop_in', selected: currentPlayer.match_type == 'drop_in' }, { label: 'Booking', value: 'bookings', selected: currentPlayer.match_type == 'bookings' }]}
+                    placeholder={currentPlayer.match_type ? currentPlayer.match_type : "Match Type"}
                     containerStyle={{ flex: 1, zIndex: 1000 }}
                     style={{ flex: 1, backgroundColor: '#fafafa', zIndex: 1000 }}
                     itemStyle={{
                         flex: 1,
                         zIndex: 1000,
-                        textAlign:'center',
+                        textAlign: 'center',
                         justifyContent: 'flex-start'
                     }}
                     dropDownStyle={{ backgroundColor: '#fafafa', zIndex: 1000 }}
@@ -386,12 +327,12 @@ function LocationSchedulePicker(props) {
                 <Text style={{ flex: 1, fontWeight: 'bold', }}>You:</Text>
                 <DropDownPicker
                     items={days}
-                    placeholder="Match Day"
+                    placeholder={currentPlayer.day ? currentPlayer.day : "Match Day"}
                     containerStyle={{ flex: 1, zIndex: 900, }}
                     style={{ backgroundColor: '#fafafa' }}
                     itemStyle={{
                         zIndex: 900,
-                        textAlign:'center',
+                        textAlign: 'center',
                         justifyContent: 'flex-start'
                     }}
                     dropDownStyle={{ backgroundColor: '#fafafa', zIndex: 900, }}
@@ -401,29 +342,30 @@ function LocationSchedulePicker(props) {
 
             <View style={{ flex: 1, padding: 10, justifyContent: 'flex-start', flexDirection: 'row', }}>
                 <Text style={{ flex: 1, marginTop: 10, fontWeight: 'bold', }}>Opponent:</Text>
-                <Text style={{ flex: 1, zIndex: 0, margin: 12, color: '#808080', textAlign: 'center' }}>{opponent.venue_key ? opponent.day : "F"}</Text>
+                <Text style={{ flex: 1, zIndex: 0, margin: 12, color: '#808080', textAlign: 'center' }}>{opponent.venue_key && opponent.day ? opponent.day : "Has no selected"}</Text>
             </View>
-            <View style={{ flex: 1, margin: 10, zIndex:500,flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, margin: 10, zIndex: 500, flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ flex: 1, fontWeight: 'bold' }}>You:</Text>
                 <DropDownPicker
 
                     items={selectedDay ? hours : []}
-                    placeholder="Match Time"
-                    containerStyle={{ zIndex:500,flex: 1, }}
-                    style={{ zIndex:500,backgroundColor: '#fafafa' }}
-                    itemStyle={{zIndex:500,
-                        textAlign:'center',
+                    placeholder={currentPlayer.time ? currentPlayer.time.label : "Match Time"}
+                    containerStyle={{ zIndex: 500, flex: 1, }}
+                    style={{ zIndex: 500, backgroundColor: '#fafafa' }}
+                    itemStyle={{
+                        zIndex: 500,
+                        textAlign: 'center',
                         justifyContent: 'flex-start'
                     }}
-                    dropDownStyle={{ zIndex:500,backgroundColor: '#fafafa' }}
+                    dropDownStyle={{ zIndex: 500, backgroundColor: '#fafafa' }}
                     onChangeItem={(item) => { props.updateValue('time', item); setTime(item); }}
                 />
 
             </View>
 
-            <View style={{flex: 1,padding:10, justifyContent: 'flex-start', flexDirection: 'row', }}>
-                <Text style={{ flex: 1,marginTop:10,fontWeight: 'bold',}}>Opponent:</Text>
-                <Text style={{ flex: 1, zIndex: 0, margin:12, color: '#808080',textAlign:'center'  }}>{opponent.venue_key ? opponent.time.label : "12:00PM - 3:00PM"}</Text>
+            <View style={{ flex: 1, padding: 10, justifyContent: 'flex-start', flexDirection: 'row', }}>
+                <Text style={{ flex: 1, marginTop: 10, fontWeight: 'bold', }}>Opponent:</Text>
+                <Text style={{ flex: 1, zIndex: 0, margin: 12, color: '#808080', textAlign: 'center' }}>{opponent.venue_key && opponent.time ? opponent.time.label : "Has not selected"}</Text>
             </View>
 
         </View >
@@ -453,16 +395,47 @@ export default function MatchEdit(props) {
 
 
     useEffect(() => {
-        //listen to changes, and update the form 
+        //listen to changes from other player and update matchDetails
+        if (match_details == null) { return; }
+        let currentPlayerKey = 'team_1_data'
+        let opponentKey = null;
+        if (match_details[currentPlayerKey].id == auth().currentUser.uid) {
+            opponentKey = 'team_2_data';
+            currentPlayerKey ='team_1_data';
+        } else {
+            opponentKey = 'team_1_data';
+            currentPlayerKey ='team_2_data';
+        }
 
-    }, []);
+     
+        const opponentListener = database().ref('/matches/' + match_id + '/' + opponentKey).on('value', snapShot => {
+            
+            if (snapShot) {
+                console.log('DATA UPDATED')
+                let updatedMatchDetails = {...match_details}
+                updatedMatchDetails[opponentKey] = snapShot.val();
+                updatedMatchDetails[currentPlayerKey] = match_details[currentPlayerKey];
+                setMatchDetails(updatedMatchDetails);
+            }
+
+        });
+
+
+        return () => database().ref('/matches/' + match_id + '/' + opponentKey).off('value',opponentListener);
+
+
+
+
+    }, [loading]);
 
 
 
     //Displays both team's inputs , if they are the same then display finalized field, edited fields are grey 
     //<MatchDetailForm formData={match_details} />
     //if all detaitls match, then there is a confirm button
+
     return (
+      
         <View style={{ flex: 1, flexDirection: 'column' }}>
             <ScrollView>
 

@@ -134,7 +134,7 @@ export default function MatchesScreen(props) {
 
     useEffect(() => {
         const unsubscribe = props.navigation.addListener('focus', () => {
-            console.log('detect focus event')
+
             fetchMatches();
             // do something
         });
